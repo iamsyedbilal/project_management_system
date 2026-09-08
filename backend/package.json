@@ -1,24 +1,26 @@
 {
-  "name": "project-management-system",
+  "name": "project_management_backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Project management backend",
   "keywords": [
     "nodejs",
-    "express",
-    "js",
-    "typescript"
+    "expressjs",
+    "javascript",
+    "typescript",
+    "backend"
   ],
   "author": "Syed bilal",
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev":"nodemon server.ts",
-    "start":"node server.ts"
+    "start": "node src/index.ts",
+    "dev": "nodemon src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
     "nodemon": "^3.1.14",
+    "prettier": "3.9.6",
     "ts-node": "^10.9.2",
     "typescript": "^7.0.2"
   }
