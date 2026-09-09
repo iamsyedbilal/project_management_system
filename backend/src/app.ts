@@ -23,6 +23,10 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
+import healthRoute from './routes/healthChecker.route.js';
+
+app.use('/api/v1', healthRoute);
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     status: 'error',
