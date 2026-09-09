@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 export interface IUser extends mongoose.Document {
   avatar: {
@@ -19,6 +21,13 @@ export interface IUser extends mongoose.Document {
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
+  generateTemporaryToken(): {
+    unHashedToken: string;
+    hashedToken: string;
+    tokenExpiry: number;
+  };
 }
 
 const userSchema = new mongoose.Schema(
@@ -88,12 +97,53 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function () {
+  // Hash the password when it changes.
   if (!this.isModified('passwordHash')) return;
   this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  // Compare the candidate with the stored hash.
   return bcrypt.compare(candidatePassword, this.passwordHash);
+};
+
+userSchema.methods.generateAccessToken = function (): string {
+  // Generate a short-lived access token.
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+    },
+    process.env.ACCESS_TOKEN_SECRET!,
+    {
+      expiresIn: '15m',
+    },
+  );
+};
+
+userSchema.methods.generateRefreshToken = function (): string {
+  // Generate a long-lived refresh token.
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET!,
+    {
+      expiresIn: '7d',
+    },
+  );
+};
+
+userSchema.methods.generateTemporaryToken = function () {
+  // Create a one-time token for email verification or password reset.
+  // Store only the hash in the database so the raw token cannot be recovered.
+  const unHashedToken = crypto.randomBytes(20).toString('hex');
+
+  const hashedToken = crypto.createHash('sha256').update(unHashedToken).digest('hex');
+
+  const tokenExpiry = Date.now() + 20 * 60 * 1000;
+  return { unHashedToken, hashedToken, tokenExpiry };
 };
 
 const User = mongoose.model<IUser>('User', userSchema);
