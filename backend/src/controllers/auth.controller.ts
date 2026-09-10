@@ -4,6 +4,7 @@ import type { CookieOptions, Request, Response } from 'express';
 import {
   loginUserService,
   logoutUserService,
+  refreshAccessTokenService,
   registerUserService,
 } from '../services/auth.service.js';
 import { registerUserValidation, loginUserValidation } from '../validators/auth.validator.js';
@@ -41,22 +42,24 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 
   const { loggedInUser, accessToken, refreshToken } = await loginUserService(result.data);
 
-  const cookieOptions: CookieOptions = {
+  const accessTokenOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict' as const,
+    maxAge: 15 * 60 * 1000,
+  };
+
+  const refreshTokenOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
   return res
     .status(200)
-    .cookie('accessToken', accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    })
-    .cookie('refreshToken', refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
+    .cookie('accessToken', accessToken, accessTokenOptions)
+    .cookie('refreshToken', refreshTokenOptions)
     .json(
       new ApiResponse(200, 'User logged in successfully', {
         user: loggedInUser,
@@ -79,4 +82,36 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     .clearCookie('accessToken', cookieOptions)
     .clearCookie('refreshToken', cookieOptions)
     .json(new ApiResponse(200, 'User logged out successfully', null));
+});
+
+// Refresh access token
+export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError(401, 'Refresh token is required');
+  }
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await refreshAccessTokenService(refreshToken);
+
+  const accessTokenOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    maxAge: 15 * 60 * 1000,
+  };
+
+  const refreshTokenOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, accessTokenOptions)
+    .cookie('refreshToken', newRefreshToken, refreshTokenOptions)
+    .json(new ApiResponse(200, 'Access token refreshed successfully'));
 });

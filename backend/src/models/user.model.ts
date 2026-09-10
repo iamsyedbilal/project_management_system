@@ -80,6 +80,8 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     refreshToken: {
       type: String,
+      select: false,
+
     },
     forgotPasswordToken: {
       type: String,

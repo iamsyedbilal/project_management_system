@@ -1,7 +1,14 @@
 import User from '../models/user.model.js';
+import crypto from 'crypto';
 import type { LoginUserServiceData, RegisterUserServiceData } from '../types/auth.type.js';
 import ApiError from '../utils/apiError.js';
 import { emailVerificationMailGenContent, sendEmail } from '../utils/mail.js';
+import jwt from 'jsonwebtoken';
+
+// Hash a token before storing it in the database
+const hashToken = (token: string): string => {
+  return crypto.createHash('sha256').update(token).digest('hex');
+};
 
 // Verify the access token and attach the authenticated user to the request
 const generateAccessAndRefreshTokens = async (userId: string) => {
@@ -14,7 +21,7 @@ const generateAccessAndRefreshTokens = async (userId: string) => {
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = hashToken(refreshToken);
   await user.save({ validateBeforeSave: false });
 
   return {
@@ -131,4 +138,43 @@ export const logoutUserService = async (userId: string) => {
   }
 
   return true;
+};
+
+// Refresh access token using refresh token
+export const refreshAccessTokenService = async (refreshToken: string) => {
+  let decoded: { _id: string };
+
+  try {
+    decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as { _id: string };
+  } catch {
+    throw new ApiError(401, 'Invalid or expired refresh token');
+  }
+
+  const user = await User.findById(decoded._id).select('+refreshToken');
+
+  if (!user || !user.refreshToken) {
+    throw new ApiError(401, 'Invalid refresh token');
+  }
+
+  const hashedRefreshToken = hashToken(refreshToken);
+
+  if (user.refreshToken !== hashedRefreshToken) {
+    throw new ApiError(401, 'Invalid refresh token');
+  }
+
+  // Rotate both tokens
+  const newAccessToken = user.generateAccessToken();
+  const newRefreshToken = user.generateRefreshToken();
+
+  // Store only the new refresh token hash
+  user.refreshToken = hashToken(newRefreshToken);
+
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  };
 };
