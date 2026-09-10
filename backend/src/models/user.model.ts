@@ -11,7 +11,7 @@ export interface IUser extends mongoose.Document {
   username: string;
   email: string;
   fullName?: string;
-  passwordHash: string;
+  password: string;
   isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpiry?: Date;
@@ -26,11 +26,11 @@ export interface IUser extends mongoose.Document {
   generateTemporaryToken(): {
     unHashedToken: string;
     hashedToken: string;
-    tokenExpiry: number;
+    tokenExpiry: Date;
   };
 }
 
-const userSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema<IUser>(
   {
     avatar: {
       type: {
@@ -47,10 +47,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
       minlength: 3,
       maxlength: 30,
-      match: [/^[a-z0-9_]+$/, 'Invalid username'],
       required: [true, 'Username is required'],
     },
     email: {
@@ -65,7 +63,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    passwordHash: {
+    password: {
       type: String,
       select: false,
       required: [true, 'Password is required'],
@@ -76,18 +74,15 @@ const userSchema = new mongoose.Schema(
     },
     emailVerificationToken: {
       type: String,
-      select: false,
     },
     emailVerificationExpiry: {
       type: Date,
     },
     refreshToken: {
       type: String,
-      select: false,
     },
     forgotPasswordToken: {
       type: String,
-      select: false,
     },
     forgotPasswordTokenExpiry: {
       type: Date,
@@ -98,13 +93,13 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre('save', async function () {
   // Hash the password when it changes.
-  if (!this.isModified('passwordHash')) return;
-  this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   // Compare the candidate with the stored hash.
-  return bcrypt.compare(candidatePassword, this.passwordHash);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.methods.generateAccessToken = function (): string {
@@ -142,7 +137,7 @@ userSchema.methods.generateTemporaryToken = function () {
 
   const hashedToken = crypto.createHash('sha256').update(unHashedToken).digest('hex');
 
-  const tokenExpiry = Date.now() + 20 * 60 * 1000;
+  const tokenExpiry = new Date(Date.now() + 20 * 60 * 1000);
   return { unHashedToken, hashedToken, tokenExpiry };
 };
 

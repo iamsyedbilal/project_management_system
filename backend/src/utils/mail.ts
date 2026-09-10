@@ -32,7 +32,7 @@ interface SendEmailOptions {
   mailgenContent: MailgenContent;
 }
 
-async function sendEmail(options: SendEmailOptions): Promise<void> {
+export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const mailGenerator = new Mailgen({
     theme: 'default',
     product: {

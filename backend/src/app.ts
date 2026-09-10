@@ -24,8 +24,11 @@ app.use((req: Request, res: Response, next) => {
 });
 
 import healthRoute from './routes/healthChecker.route.js';
+import authRoute from './routes/auth.route.js';
+import { errorHandler } from './middlewares/errorHandler.middleware.js';
 
 app.use('/api/v1', healthRoute);
+app.use('/api/v1/auth', authRoute);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({
@@ -34,5 +37,7 @@ app.use((req: Request, res: Response) => {
     message: 'Route not found',
   });
 });
+
+app.use(errorHandler);
 
 export default app;
