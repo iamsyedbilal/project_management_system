@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from './utils/logger.js';
 const app = express();
@@ -14,6 +15,7 @@ app.use(
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(express.static('public'));
+app.use(cookieParser());
 
 app.use((req: Request, res: Response, next) => {
   const start = Date.now();

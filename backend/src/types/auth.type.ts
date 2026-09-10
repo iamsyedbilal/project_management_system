@@ -3,3 +3,8 @@ export interface RegisterUserServiceData {
   email: string;
   password: string;
 }
+
+export interface LoginUserServiceData {
+  identifier: string;
+  password: string;
+}

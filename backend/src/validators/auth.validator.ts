@@ -19,4 +19,20 @@ export const registerUserValidation = z.object({
     .max(100, 'Password cannot exceed 100 characters'),
 });
 
+export const loginUserValidation = z.object({
+  identifier: z
+    .string({
+      error: 'Username or email is required',
+    })
+    .trim()
+    .min(1, 'Username or email is required'),
+
+  password: z
+    .string({
+      error: 'Password is required',
+    })
+    .min(1, 'Password is required'),
+});
+
+export type LoginInput = z.infer<typeof loginUserValidation>;
 export type RegisterInput = z.infer<typeof registerUserValidation>;
