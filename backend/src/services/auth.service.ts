@@ -3,7 +3,7 @@ import type { LoginUserServiceData, RegisterUserServiceData } from '../types/aut
 import ApiError from '../utils/apiError.js';
 import { emailVerificationMailGenContent, sendEmail } from '../utils/mail.js';
 
-// Generate Access Token & Refresh Token
+// Verify the access token and attach the authenticated user to the request
 const generateAccessAndRefreshTokens = async (userId: string) => {
   const user = await User.findById(userId);
 
@@ -23,6 +23,7 @@ const generateAccessAndRefreshTokens = async (userId: string) => {
   };
 };
 
+// Register a new user and send email verification
 export const registerUserService = async (userData: RegisterUserServiceData, baseUrl: string) => {
   const { password } = userData;
 
@@ -75,6 +76,7 @@ export const registerUserService = async (userData: RegisterUserServiceData, bas
   return createdUser;
 };
 
+// Authenticate user and generate access/refresh tokens
 export const loginUserService = async (userData: LoginUserServiceData) => {
   const { identifier, password } = userData;
   const normalizedIdentifier = identifier.trim().toLowerCase();
@@ -108,4 +110,25 @@ export const loginUserService = async (userData: LoginUserServiceData) => {
   }
 
   return { loggedInUser, accessToken, refreshToken };
+};
+
+// Logout user by removing the refresh token from the database
+export const logoutUserService = async (userId: string) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  return true;
 };

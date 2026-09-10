@@ -1,10 +1,15 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/apiResponse.js';
 import type { CookieOptions, Request, Response } from 'express';
-import { loginUserService, registerUserService } from '../services/auth.service.js';
+import {
+  loginUserService,
+  logoutUserService,
+  registerUserService,
+} from '../services/auth.service.js';
 import { registerUserValidation, loginUserValidation } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
 
+// User register
 export const registerUser = asyncHandler(async (req: Request, res: Response) => {
   const result = registerUserValidation.safeParse(req.body);
   const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -26,6 +31,7 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
     );
 });
 
+// Login User
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const result = loginUserValidation.safeParse(req.body);
 
@@ -56,4 +62,21 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
         user: loggedInUser,
       }),
     );
+});
+
+// Logout the authenticated user
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  await logoutUserService(req.user!._id.toString());
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+  };
+
+  return res
+    .status(200)
+    .clearCookie('accessToken', cookieOptions)
+    .clearCookie('refreshToken', cookieOptions)
+    .json(new ApiResponse(200, 'User logged out successfully', null));
 });
