@@ -1,6 +1,12 @@
 import User from '../models/user.model.js';
 import crypto from 'crypto';
-import type { LoginUserServiceData, RegisterUserServiceData } from '../types/auth.type.js';
+import type {
+  ChangeCurrentPasswordServiceData,
+  ForgotPasswordRequestServiceData,
+  LoginUserServiceData,
+  RegisterUserServiceData,
+  ResetForgotPasswordServiceData,
+} from '../types/auth.type.js';
 import ApiError from '../utils/apiError.js';
 import {
   emailVerificationMailGenContent,
@@ -8,6 +14,7 @@ import {
   sendEmail,
 } from '../utils/mail.js';
 import jwt from 'jsonwebtoken';
+import type { ChangeCurrentPasswordInput } from '../validators/auth.validator.js';
 
 // Hash a token before storing it in the database
 const hashToken = (token: string): string => {
@@ -229,8 +236,8 @@ export const resendEmailVerificationService = async (baseUrl: string, userId: st
   });
 };
 
-export const forgotPasswordRequestService = async (email: string) => {
-  const user = await User.findOne({ email });
+export const forgotPasswordRequestService = async (email: ForgotPasswordRequestServiceData) => {
+  const user = await User.findOne({ email: email.email });
 
   if (!user) {
     throw new ApiError(404, 'User does not exists');
@@ -259,14 +266,8 @@ export const forgotPasswordRequestService = async (email: string) => {
 
 export const resetForgotPasswordService = async ({
   resetToken,
-  validateForgotData,
-}: {
-  resetToken: string;
-  validateForgotData: {
-    password: string;
-    confirmPassword: string;
-  };
-}) => {
+  password,
+}: ResetForgotPasswordServiceData) => {
   let hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
   const user = await User.findOne({
@@ -278,9 +279,30 @@ export const resetForgotPasswordService = async ({
     throw new ApiError(400, 'Token is invalid or expired');
   }
 
-  user.password = validateForgotData.password;
+  user.password = password;
   user.forgotPasswordToken = undefined;
   user.forgotPasswordTokenExpiry = undefined;
 
+  await user.save({ validateBeforeSave: false });
+};
+
+export const changeCurrentPasswordService = async ({
+  userId,
+  currentPassword,
+  newPassword,
+}: ChangeCurrentPasswordServiceData) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(400, 'User not found');
+  }
+
+  const isPasswordValid = await user.comparePassword(currentPassword);
+
+  if (!isPasswordValid) {
+    throw new ApiError(400, 'Invalid old Password');
+  }
+
+  user.password = newPassword;
   await user.save({ validateBeforeSave: false });
 };

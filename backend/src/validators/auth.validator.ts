@@ -56,7 +56,30 @@ export const resetForgotPasswordValidation = z
     path: ['confirmPassword'],
   });
 
+export const changeCurrentPasswordValidation = z
+  .object({
+    currentPassword: z.string({
+      error: 'Current password is required',
+    }),
+
+    newPassword: z
+      .string({
+        error: 'New password is required',
+      })
+      .min(8, 'New password must be at least 8 characters')
+      .max(100, 'New password cannot exceed 100 characters'),
+
+    confirmPassword: z.string({
+      error: 'Confirm password is required',
+    }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
 export type LoginInput = z.infer<typeof loginUserValidation>;
 export type RegisterInput = z.infer<typeof registerUserValidation>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordValidation>;
 export type ResetForgotPasswordInput = z.infer<typeof resetForgotPasswordValidation>;
+export type ChangeCurrentPasswordInput = z.infer<typeof changeCurrentPasswordValidation>;

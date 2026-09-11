@@ -2,6 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/apiResponse.js';
 import type { CookieOptions, Request, Response } from 'express';
 import {
+  changeCurrentPasswordService,
   forgotPasswordRequestService,
   loginUserService,
   logoutUserService,
@@ -16,6 +17,7 @@ import {
   loginUserValidation,
   forgotPasswordValidation,
   resetForgotPasswordValidation,
+  changeCurrentPasswordValidation,
 } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
 
@@ -166,7 +168,7 @@ export const forgotPasswordRequest = asyncHandler(async (req: Request, res: Resp
     throw new ApiError(400, forgotValidation.error.issues[0]?.message ?? 'Invalid request data');
   }
 
-  await forgotPasswordRequestService(forgotValidation.data.email);
+  await forgotPasswordRequestService({ email: forgotValidation.data.email });
 
   return res
     .status(200)
@@ -192,8 +194,37 @@ export const resetForgotPassword = asyncHandler(async (req: Request, res: Respon
 
   await resetForgotPasswordService({
     resetToken,
-    validateForgotData: validateForgotData.data,
+    ...validateForgotData.data,
   });
 
   return res.status(200).json(new ApiResponse(200, 'Password reset successfully', {}));
+});
+
+export const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!req.user) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const changePasswordValidationData = changeCurrentPasswordValidation.safeParse({
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+
+  if (!changePasswordValidationData.success) {
+    throw new ApiError(
+      400,
+      changePasswordValidationData.error.issues[0]?.message ?? 'Invalid request data',
+    );
+  }
+
+  await changeCurrentPasswordService({
+    userId: req.user._id.toString(),
+    currentPassword: changePasswordValidationData.data.currentPassword,
+    newPassword: changePasswordValidationData.data.newPassword,
+  });
+
+  return res.status(200).json(new ApiResponse(200, 'Password changed successfully', {}));
 });

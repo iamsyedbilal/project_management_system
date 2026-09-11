@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  changeCurrentPassword,
   forgotPasswordRequest,
   loginUser,
   logout,
@@ -25,5 +26,7 @@ router.route('/resend-email-verification').post(verifyJWT, resendEmailVerificati
 router.route('/forgot-password').post(forgotPasswordRequest);
 
 router.route('/reset-password/:reset-token').post(resetForgotPassword);
+
+router.route('/change-password').post(verifyJWT, changeCurrentPassword);
 
 export default router;
