@@ -5,6 +5,7 @@ import {
   logout,
   registerUser,
   resendEmailVerification,
+  resetForgotPassword,
   verifyEmail,
 } from '../controllers/auth.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
@@ -22,5 +23,7 @@ router.route('/verify-email/:verificationToken').get(verifyEmail);
 router.route('/resend-email-verification').post(verifyJWT, resendEmailVerification);
 
 router.route('/forgot-password').post(forgotPasswordRequest);
+
+router.route('/reset-password/:reset-token').post(resetForgotPassword);
 
 export default router;

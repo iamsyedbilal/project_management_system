@@ -256,3 +256,31 @@ export const forgotPasswordRequestService = async (email: string) => {
     throw new ApiError(500, 'Password reset email could not be sent. Please try again later.');
   }
 };
+
+export const resetForgotPasswordService = async ({
+  resetToken,
+  validateForgotData,
+}: {
+  resetToken: string;
+  validateForgotData: {
+    password: string;
+    confirmPassword: string;
+  };
+}) => {
+  let hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  const user = await User.findOne({
+    forgotPasswordToken: hashedToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ApiError(400, 'Token is invalid or expired');
+  }
+
+  user.password = validateForgotData.password;
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordTokenExpiry = undefined;
+
+  await user.save({ validateBeforeSave: false });
+};

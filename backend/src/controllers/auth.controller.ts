@@ -8,12 +8,14 @@ import {
   refreshAccessTokenService,
   registerUserService,
   resendEmailVerificationService,
+  resetForgotPasswordService,
   verifyEmailService,
 } from '../services/auth.service.js';
 import {
   registerUserValidation,
   loginUserValidation,
   forgotPasswordValidation,
+  resetForgotPasswordValidation,
 } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
 
@@ -169,4 +171,29 @@ export const forgotPasswordRequest = asyncHandler(async (req: Request, res: Resp
   return res
     .status(200)
     .json(new ApiResponse(200, 'Password reset mail has been sent on your mail id', {}));
+});
+
+export const resetForgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { resetToken } = req.params;
+
+  if (typeof resetToken !== 'string') {
+    throw new ApiError(400, 'Invalid reset token');
+  }
+
+  const { password, confirmPassword } = req.body;
+  const validateForgotData = resetForgotPasswordValidation.safeParse({
+    password,
+    confirmPassword,
+  });
+
+  if (!validateForgotData.success) {
+    throw new ApiError(400, validateForgotData.error.issues[0]?.message ?? 'Invalid request data');
+  }
+
+  await resetForgotPasswordService({
+    resetToken,
+    validateForgotData: validateForgotData.data,
+  });
+
+  return res.status(200).json(new ApiResponse(200, 'Password reset successfully', {}));
 });
