@@ -37,7 +37,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     theme: 'default',
     product: {
       name: 'Task Manager',
-      link: 'https://taskmanagelink.com',
+      link: 'http://localhost:8000',
     },
   });
 
@@ -54,7 +54,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
   });
 
   const mail = {
-    from: 'mail.taskmanager@example.com',
+    from: 'syedbilal.dev27@gmail.com',
     to: options.email,
     subject: options.subject,
     text: emailTextual,
@@ -62,9 +62,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
   };
 
   try {
-    await transporter.sendMail(mail);
+    const info = await transporter.sendMail(mail);
+    logger.info(`Email sent successfully: ${info.messageId}`);
   } catch (error) {
     logger.error(`Error while sending email: ${error}`);
+    throw error;
   }
 }
 

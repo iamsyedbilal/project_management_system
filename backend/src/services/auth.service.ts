@@ -2,7 +2,6 @@ import User from '../models/user.model.js';
 import crypto from 'crypto';
 import type {
   ChangeCurrentPasswordServiceData,
-  ForgotPasswordRequestServiceData,
   LoginUserServiceData,
   RegisterUserServiceData,
   ResetForgotPasswordServiceData,
@@ -14,7 +13,6 @@ import {
   sendEmail,
 } from '../utils/mail.js';
 import jwt from 'jsonwebtoken';
-import type { ChangeCurrentPasswordInput } from '../validators/auth.validator.js';
 
 // Hash a token before storing it in the database
 const hashToken = (token: string): string => {
@@ -53,7 +51,7 @@ export const registerUserService = async (userData: RegisterUserServiceData, bas
   });
 
   if (existingUser) {
-    throw new ApiError(409, 'User  already registered');
+    throw new ApiError(409, 'User already registered');
   }
 
   const user = new User({
@@ -76,7 +74,7 @@ export const registerUserService = async (userData: RegisterUserServiceData, bas
       subject: 'Please verify your email',
       mailgenContent: emailVerificationMailGenContent(
         user.username,
-        `${baseUrl}/api/v1/users/verify-email/${unHashedToken}`,
+        `${baseUrl}/api/v1/auth/verify-email/${unHashedToken}`,
       ),
     });
   } catch (error) {
@@ -140,7 +138,7 @@ export const logoutUserService = async (userId: string) => {
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
     },
   );
 
@@ -190,6 +188,7 @@ export const refreshAccessTokenService = async (refreshToken: string) => {
   };
 };
 
+// Verify Email Service
 export const verifyEmailService = async (verificationToken: string) => {
   let hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
 
@@ -206,23 +205,24 @@ export const verifyEmailService = async (verificationToken: string) => {
   user.emailVerificationExpiry = undefined;
 
   user.isEmailVerified = true;
+  user.refreshToken = undefined;
   await user.save({ validateBeforeSave: false });
 };
 
-export const resendEmailVerificationService = async (baseUrl: string, userId: string) => {
-  const user = await User.findById(userId);
+// Resend Email Verification Service
+export const resendEmailVerificationService = async (baseUrl: string, email: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
 
-  if (!user) {
-    throw new ApiError(404, 'User does not exist');
-  }
-  if (user.isEmailVerified) {
-    throw new ApiError(409, 'Email is already verified');
+  if (!user || user.isEmailVerified) {
+    return;
   }
 
   const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
 
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
+  user.refreshToken = undefined;
 
   await user.save({ validateBeforeSave: false });
 
@@ -231,16 +231,17 @@ export const resendEmailVerificationService = async (baseUrl: string, userId: st
     subject: 'Please verify your email',
     mailgenContent: emailVerificationMailGenContent(
       user.username,
-      `${baseUrl}/api/v1/users/verify-email/${unHashedToken}`,
+      `${baseUrl}/api/v1/auth/verify-email/${unHashedToken}`,
     ),
   });
 };
 
-export const forgotPasswordRequestService = async (email: ForgotPasswordRequestServiceData) => {
-  const user = await User.findOne({ email: email.email });
+// Forgot Password Request Service
+export const forgotPasswordRequestService = async (email: string) => {
+  const user = await User.findOne({ email });
 
   if (!user) {
-    throw new ApiError(404, 'User does not exists');
+    return;
   }
 
   const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
@@ -256,7 +257,7 @@ export const forgotPasswordRequestService = async (email: ForgotPasswordRequestS
       subject: 'Password reset request',
       mailgenContent: forgotPasswordMailGenContent(
         user.username,
-        `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
+        `http://localhost:8000/api/v1/auth/reset-password/${unHashedToken}`,
       ),
     });
   } catch (error) {
@@ -264,15 +265,16 @@ export const forgotPasswordRequestService = async (email: ForgotPasswordRequestS
   }
 };
 
+// Reset Forgot Password Service
 export const resetForgotPasswordService = async ({
   resetToken,
   password,
 }: ResetForgotPasswordServiceData) => {
-  let hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
   const user = await User.findOne({
     forgotPasswordToken: hashedToken,
-    forgotPasswordExpiry: { $gt: Date.now() },
+    forgotPasswordTokenExpiry: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -280,18 +282,20 @@ export const resetForgotPasswordService = async ({
   }
 
   user.password = password;
+  user.refreshToken = undefined;
   user.forgotPasswordToken = undefined;
   user.forgotPasswordTokenExpiry = undefined;
 
-  await user.save({ validateBeforeSave: false });
+  await user.save();
 };
 
+// Change Current Password Service
 export const changeCurrentPasswordService = async ({
   userId,
   currentPassword,
   newPassword,
 }: ChangeCurrentPasswordServiceData) => {
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('+password');
 
   if (!user) {
     throw new ApiError(400, 'User not found');
@@ -300,9 +304,17 @@ export const changeCurrentPasswordService = async ({
   const isPasswordValid = await user.comparePassword(currentPassword);
 
   if (!isPasswordValid) {
-    throw new ApiError(400, 'Invalid old Password');
+    throw new ApiError(401, 'Current password is incorrect');
+  }
+
+  const isSamePassword = await user.comparePassword(newPassword);
+
+  if (isSamePassword) {
+    throw new ApiError(400, 'New password must be different from current password');
   }
 
   user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
+  user.refreshToken = undefined;
+
+  await user.save();
 };

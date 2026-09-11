@@ -21,11 +21,11 @@ router.route('/logout').post(verifyJWT, logout);
 
 router.route('/verify-email/:verificationToken').get(verifyEmail);
 
-router.route('/resend-email-verification').post(verifyJWT, resendEmailVerification);
+router.route('/resend-email-verification').post(resendEmailVerification);
 
 router.route('/forgot-password').post(forgotPasswordRequest);
 
-router.route('/reset-password/:reset-token').post(resetForgotPassword);
+router.route('/reset-password/:resetToken').post(resetForgotPassword);
 
 router.route('/change-password').post(verifyJWT, changeCurrentPassword);
 

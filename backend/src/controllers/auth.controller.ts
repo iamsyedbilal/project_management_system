@@ -1,6 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/apiResponse.js';
-import type { CookieOptions, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import {
   changeCurrentPasswordService,
   forgotPasswordRequestService,
@@ -18,8 +18,14 @@ import {
   forgotPasswordValidation,
   resetForgotPasswordValidation,
   changeCurrentPasswordValidation,
+  resendEmailVerificationValidation,
 } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
+import {
+  accessTokenCookieOptions,
+  clearCookieOptions,
+  refreshTokenCookieOptions,
+} from '../utils/cookies.js';
 
 // User register
 export const registerUser = asyncHandler(async (req: Request, res: Response) => {
@@ -53,24 +59,10 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 
   const { loggedInUser, accessToken, refreshToken } = await loginUserService(result.data);
 
-  const accessTokenOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge: 15 * 60 * 1000,
-  };
-
-  const refreshTokenOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
-
   return res
     .status(200)
-    .cookie('accessToken', accessToken, accessTokenOptions)
-    .cookie('refreshToken', refreshTokenOptions)
+    .cookie('accessToken', accessToken, accessTokenCookieOptions)
+    .cookie('refreshToken', refreshToken, refreshTokenCookieOptions)
     .json(
       new ApiResponse(200, 'User logged in successfully', {
         user: loggedInUser,
@@ -82,16 +74,10 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   await logoutUserService(req.user!._id.toString());
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-  };
-
   return res
     .status(200)
-    .clearCookie('accessToken', cookieOptions)
-    .clearCookie('refreshToken', cookieOptions)
+    .clearCookie('accessToken', clearCookieOptions)
+    .clearCookie('refreshToken', clearCookieOptions)
     .json(new ApiResponse(200, 'User logged out successfully', null));
 });
 
@@ -106,27 +92,14 @@ export const refreshAccessToken = asyncHandler(async (req: Request, res: Respons
   const { accessToken, refreshToken: newRefreshToken } =
     await refreshAccessTokenService(refreshToken);
 
-  const accessTokenOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge: 15 * 60 * 1000,
-  };
-
-  const refreshTokenOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
-
   return res
     .status(200)
-    .cookie('accessToken', accessToken, accessTokenOptions)
-    .cookie('refreshToken', newRefreshToken, refreshTokenOptions)
+    .cookie('accessToken', accessToken, accessTokenCookieOptions)
+    .cookie('refreshToken', newRefreshToken, refreshTokenCookieOptions)
     .json(new ApiResponse(200, 'Access token refreshed successfully'));
 });
 
+// Verify Email
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   const { verificationToken } = req.params;
 
@@ -148,33 +121,45 @@ export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   );
 });
 
+// Resend Email Verification
 export const resendEmailVerification = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    throw new ApiError(401, 'Unauthorized');
+  const result = resendEmailVerificationValidation.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(400, result.error.issues[0]?.message ?? 'Invalid request data');
   }
 
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  const userId = req.user._id.toString();
-  await resendEmailVerificationService(baseUrl, userId);
+  await resendEmailVerificationService(baseUrl, result.data.email);
 
   return res.status(200).json(new ApiResponse(200, 'Mail has been sent to your email ID', {}));
 });
 
+// Forgot Password Request
 export const forgotPasswordRequest = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
-  const forgotValidation = forgotPasswordValidation.safeParse(email);
+  const validatedData = forgotPasswordValidation.safeParse({
+    email,
+  });
 
-  if (!forgotValidation.success) {
-    throw new ApiError(400, forgotValidation.error.issues[0]?.message ?? 'Invalid request data');
+  if (!validatedData.success) {
+    throw new ApiError(400, validatedData.error.issues[0]?.message ?? 'Invalid request data');
   }
 
-  await forgotPasswordRequestService({ email: forgotValidation.data.email });
+  await forgotPasswordRequestService(validatedData.data.email);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, 'Password reset mail has been sent on your mail id', {}));
+    .json(
+      new ApiResponse(
+        200,
+        'If an account exists for this email, a password reset link has been sent.',
+        {},
+      ),
+    );
 });
 
+// Reset Forgot Password
 export const resetForgotPassword = asyncHandler(async (req: Request, res: Response) => {
   const { resetToken } = req.params;
 
@@ -200,6 +185,7 @@ export const resetForgotPassword = asyncHandler(async (req: Request, res: Respon
   return res.status(200).json(new ApiResponse(200, 'Password reset successfully', {}));
 });
 
+// Change Current Password
 export const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
 

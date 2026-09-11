@@ -38,6 +38,10 @@ export const forgotPasswordValidation = z.object({
   email: z.email('Invalid email address'),
 });
 
+export const resendEmailVerificationValidation = z.object({
+  email: z.email('Invalid email address'),
+});
+
 export const resetForgotPasswordValidation = z
   .object({
     password: z
