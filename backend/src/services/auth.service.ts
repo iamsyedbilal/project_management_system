@@ -178,3 +178,49 @@ export const refreshAccessTokenService = async (refreshToken: string) => {
     refreshToken: newRefreshToken,
   };
 };
+
+export const verifyEmailService = async (verificationToken: string) => {
+  let hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+  const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ApiError(400, 'Token is invalid or expired');
+  }
+
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpiry = undefined;
+
+  user.isEmailVerified = true;
+  await user.save({ validateBeforeSave: false });
+};
+
+export const resendEmailVerificationService = async (baseUrl: string, userId: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, 'User does not exist');
+  }
+  if (user.isEmailVerified) {
+    throw new ApiError(409, 'Email is already verified');
+  }
+
+  const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
+
+  user.emailVerificationToken = hashedToken;
+  user.emailVerificationExpiry = tokenExpiry;
+
+  await user.save({ validateBeforeSave: false });
+
+  await sendEmail({
+    email: user?.email,
+    subject: 'Please verify your email',
+    mailgenContent: emailVerificationMailGenContent(
+      user.username,
+      `${baseUrl}/api/v1/users/verify-email/${unHashedToken}`,
+    ),
+  });
+};

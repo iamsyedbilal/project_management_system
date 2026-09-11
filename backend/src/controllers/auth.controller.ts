@@ -6,6 +6,8 @@ import {
   logoutUserService,
   refreshAccessTokenService,
   registerUserService,
+  resendEmailVerificationService,
+  verifyEmailService,
 } from '../services/auth.service.js';
 import { registerUserValidation, loginUserValidation } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
@@ -114,4 +116,37 @@ export const refreshAccessToken = asyncHandler(async (req: Request, res: Respons
     .cookie('accessToken', accessToken, accessTokenOptions)
     .cookie('refreshToken', newRefreshToken, refreshTokenOptions)
     .json(new ApiResponse(200, 'Access token refreshed successfully'));
+});
+
+export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { verificationToken } = req.params;
+
+  if (typeof verificationToken !== 'string') {
+    throw new ApiError(400, 'Invalid verification token');
+  }
+
+  await verifyEmailService(verificationToken);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+
+      'Email is verified',
+      {
+        isEmailVerified: true,
+      },
+    ),
+  );
+});
+
+export const resendEmailVerification = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const userId = req.user._id.toString();
+  await resendEmailVerificationService(baseUrl, userId);
+
+  return res.status(200).json(new ApiResponse(200, 'Mail has been sent to your email ID', {}));
 });

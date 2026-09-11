@@ -13,11 +13,11 @@ export interface IUser extends mongoose.Document {
   fullName?: string;
   password: string;
   isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  emailVerificationExpiry?: Date;
-  refreshToken?: string;
-  forgotPasswordToken?: string;
-  forgotPasswordTokenExpiry?: Date;
+  emailVerificationToken: string | undefined;
+  emailVerificationExpiry: Date | undefined;
+  refreshToken: string | undefined;
+  forgotPasswordToken: string | undefined;
+  forgotPasswordTokenExpiry: Date | undefined;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -81,7 +81,6 @@ const userSchema = new mongoose.Schema<IUser>(
     refreshToken: {
       type: String,
       select: false,
-
     },
     forgotPasswordToken: {
       type: String,
