@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  forgotPasswordRequest,
   loginUser,
   logout,
   registerUser,
@@ -19,5 +20,7 @@ router.route('/logout').post(verifyJWT, logout);
 router.route('/verify-email/:verificationToken').get(verifyEmail);
 
 router.route('/resend-email-verification').post(verifyJWT, resendEmailVerification);
+
+router.route('/forgot-password').post(forgotPasswordRequest);
 
 export default router;

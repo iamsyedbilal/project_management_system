@@ -34,5 +34,10 @@ export const loginUserValidation = z.object({
     .min(1, 'Password is required'),
 });
 
+export const forgotPasswordValidation = z.object({
+  email: z.email('Invalid email address'),
+});
+
 export type LoginInput = z.infer<typeof loginUserValidation>;
 export type RegisterInput = z.infer<typeof registerUserValidation>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordValidation>;

@@ -2,6 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/apiResponse.js';
 import type { CookieOptions, Request, Response } from 'express';
 import {
+  forgotPasswordRequestService,
   loginUserService,
   logoutUserService,
   refreshAccessTokenService,
@@ -9,7 +10,11 @@ import {
   resendEmailVerificationService,
   verifyEmailService,
 } from '../services/auth.service.js';
-import { registerUserValidation, loginUserValidation } from '../validators/auth.validator.js';
+import {
+  registerUserValidation,
+  loginUserValidation,
+  forgotPasswordValidation,
+} from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
 
 // User register
@@ -149,4 +154,19 @@ export const resendEmailVerification = asyncHandler(async (req: Request, res: Re
   await resendEmailVerificationService(baseUrl, userId);
 
   return res.status(200).json(new ApiResponse(200, 'Mail has been sent to your email ID', {}));
+});
+
+export const forgotPasswordRequest = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const forgotValidation = forgotPasswordValidation.safeParse(email);
+
+  if (!forgotValidation.success) {
+    throw new ApiError(400, forgotValidation.error.issues[0]?.message ?? 'Invalid request data');
+  }
+
+  await forgotPasswordRequestService(forgotValidation.data.email);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Password reset mail has been sent on your mail id', {}));
 });

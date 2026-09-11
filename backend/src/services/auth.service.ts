@@ -2,7 +2,11 @@ import User from '../models/user.model.js';
 import crypto from 'crypto';
 import type { LoginUserServiceData, RegisterUserServiceData } from '../types/auth.type.js';
 import ApiError from '../utils/apiError.js';
-import { emailVerificationMailGenContent, sendEmail } from '../utils/mail.js';
+import {
+  emailVerificationMailGenContent,
+  forgotPasswordMailGenContent,
+  sendEmail,
+} from '../utils/mail.js';
 import jwt from 'jsonwebtoken';
 
 // Hash a token before storing it in the database
@@ -223,4 +227,32 @@ export const resendEmailVerificationService = async (baseUrl: string, userId: st
       `${baseUrl}/api/v1/users/verify-email/${unHashedToken}`,
     ),
   });
+};
+
+export const forgotPasswordRequestService = async (email: string) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, 'User does not exists');
+  }
+
+  const { unHashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
+
+  user.forgotPasswordToken = hashedToken;
+  user.forgotPasswordTokenExpiry = tokenExpiry;
+
+  await user.save({ validateBeforeSave: false });
+
+  try {
+    await sendEmail({
+      email: user?.email,
+      subject: 'Password reset request',
+      mailgenContent: forgotPasswordMailGenContent(
+        user.username,
+        `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
+      ),
+    });
+  } catch (error) {
+    throw new ApiError(500, 'Password reset email could not be sent. Please try again later.');
+  }
 };
