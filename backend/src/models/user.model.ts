@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { AvailableUserRole, UserRole, UserRoleType } from '../utils/constants.js';
 
 export interface IUser extends mongoose.Document {
   avatar: {
@@ -12,6 +13,7 @@ export interface IUser extends mongoose.Document {
   email: string;
   fullName?: string;
   password: string;
+  role: UserRoleType;
   isEmailVerified: boolean;
   emailVerificationToken: string | undefined;
   emailVerificationExpiry: Date | undefined;
@@ -68,6 +70,12 @@ const userSchema = new mongoose.Schema<IUser>(
       select: false,
       required: [true, 'Password is required'],
     },
+    role: {
+      type: String,
+      enum: AvailableUserRole,
+      default: UserRole.MEMBER,
+      required: [true, 'User role is required'],
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -93,18 +101,15 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 userSchema.pre('save', async function () {
-  // Hash the password when it changes.
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  // Compare the candidate with the stored hash.
   return bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.methods.generateAccessToken = function (): string {
-  // Generate a short-lived access token.
   return jwt.sign(
     {
       _id: this._id,
@@ -119,7 +124,6 @@ userSchema.methods.generateAccessToken = function (): string {
 };
 
 userSchema.methods.generateRefreshToken = function (): string {
-  // Generate a long-lived refresh token.
   return jwt.sign(
     {
       _id: this._id,
@@ -132,12 +136,8 @@ userSchema.methods.generateRefreshToken = function (): string {
 };
 
 userSchema.methods.generateTemporaryToken = function () {
-  // Create a one-time token for email verification or password reset.
-  // Store only the hash in the database so the raw token cannot be recovered.
   const unHashedToken = crypto.randomBytes(20).toString('hex');
-
   const hashedToken = crypto.createHash('sha256').update(unHashedToken).digest('hex');
-
   const tokenExpiry = new Date(Date.now() + 20 * 60 * 1000);
   return { unHashedToken, hashedToken, tokenExpiry };
 };
