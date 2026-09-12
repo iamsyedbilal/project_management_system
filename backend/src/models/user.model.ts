@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { AvailableUserRole, UserRole, UserRoleType } from '../utils/constants.js';
+import { AvailableUserRole, UserRole } from '../utils/constants.js';
+import type { UserRoleType } from '../utils/constants.js';
 
 export interface IUser extends mongoose.Document {
   avatar: {

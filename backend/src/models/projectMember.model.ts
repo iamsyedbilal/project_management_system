@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { UserRole, UserRoleType } from '../utils/constants.js';
+import { UserRole } from '../utils/constants.js';
+import type { UserRoleType } from '../utils/constants.js';
 
 export interface IProjectMember extends mongoose.Document {
   project: mongoose.Types.ObjectId;

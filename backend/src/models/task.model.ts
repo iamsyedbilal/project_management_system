@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { AvailableTasksStatus, TaskStatusType } from '../utils/constants.js';
+import { AvailableTasksStatus } from '../utils/constants.js';
+import type { TaskStatusType } from '../utils/constants.js';
 
 export interface ITaskAttachment {
   url: string;
