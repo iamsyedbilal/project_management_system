@@ -81,7 +81,17 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
 });
 
 // List project members
-export const listProjectMembers = asyncHandler(async (req: Request, res: Response) => {});
+export const listProjectMembers = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  const projectMembers = await listProjectMembersService(projectId);
+
+  return res.status(200).json(new ApiResponse(200, 'Project members fetched', projectMembers));
+});
 
 // Add project member
 export const addProjectMember = asyncHandler(async (req: Request, res: Response) => {});

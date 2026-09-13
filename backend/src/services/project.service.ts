@@ -62,7 +62,15 @@ export const deleteProjectService = async (projectId: string) => {
   }
 };
 
-export const listProjectMembersService = async () => {};
+export const listProjectMembersService = async (projectId: string) => {
+  const project = await Project.findById(projectId).populate('user', '-password -refreshToken');
+
+  if (!project) {
+    throw new ApiError(404, 'Project not found');
+  }
+
+  return project;
+};
 
 export const addProjectMemberService = async () => {};
 
