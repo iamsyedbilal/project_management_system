@@ -63,7 +63,9 @@ export const deleteProjectService = async (projectId: string) => {
 };
 
 export const listProjectMembersService = async (projectId: string) => {
-  const project = await Project.findById(projectId).populate('user', '-password -refreshToken');
+  const project = await ProjectMember.find({
+    project: projectId,
+  }).populate('user', '-password -refreshToken');
 
   if (!project) {
     throw new ApiError(404, 'Project not found');

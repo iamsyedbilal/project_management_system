@@ -9,7 +9,7 @@ export const validateProjectPermission = (roles: UserRoleType[] = []) =>
   asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
     const { projectId } = req.params;
 
-    if (!projectId) {
+    if (!projectId || typeof projectId !== 'string') {
       throw new ApiError(400, 'Project id is missing');
     }
 

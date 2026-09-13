@@ -96,7 +96,7 @@ Project Camp Backend is a RESTful API service designed to support collaborative 
 - `GET /:projectId` - Get project details (secured, role-based) ✅
 - `PUT /:projectId` - Update project (secured, Admin only) ✅
 - `DELETE /:projectId` - Delete project (secured, Admin only) ✅
-- `GET /:projectId/members` - List project members (secured)
+- `GET /:projectId/members` - List project members (secured) ✅
 - `POST /:projectId/members` - Add project member (secured, Admin only)
 - `PUT /:projectId/members/:userId` - Update member role (secured, Admin only)
 - `DELETE /:projectId/members/:userId` - Remove member (secured, Admin only)
