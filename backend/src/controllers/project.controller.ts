@@ -39,13 +39,46 @@ export const createProject = asyncHandler(async (req: Request, res: Response) =>
 });
 
 // Get project details - ADMIN
-export const getProjectDetails = asyncHandler(async (req: Request, res: Response) => {});
+export const getProjectDetails = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  const project = await getProjectDetailsService(projectId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Project details fetched successfully', project));
+});
 
 // Update project  - ADMIN
-export const updateProject = asyncHandler(async (req: Request, res: Response) => {});
+export const updateProject = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { name, description } = req.body;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  const updatedProject = await updateProjectService(projectId, { name, description });
+
+  return res.status(200).json(new ApiResponse(200, 'Project update successfully', updatedProject));
+});
 
 // Delete project - ADMIN
-export const deleteProject = asyncHandler(async (req: Request, res: Response) => {});
+export const deleteProject = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  await deleteProjectService(projectId);
+
+  return res.status(200).json(new ApiResponse(200, 'Project deleted successfully'));
+});
 
 // List project members
 export const listProjectMembers = asyncHandler(async (req: Request, res: Response) => {});

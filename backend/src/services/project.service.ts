@@ -27,11 +27,40 @@ export const createProjectService = async ({ data, userId }: CreateProjectServic
   return project;
 };
 
-export const getProjectDetailsService = async () => {};
+export const getProjectDetailsService = async (projectId: string) => {
+  const project = Project.findById(projectId);
+  if (!project) {
+    throw new ApiError(400, 'Project not found');
+  }
+  return project;
+};
 
-export const updateProjectService = async () => {};
+export const updateProjectService = async (
+  projectId: string,
+  { name, description }: { name?: string; description?: string },
+) => {
+  const updatedProject = await Project.findByIdAndUpdate(
+    projectId,
+    {
+      name,
+      description,
+    },
+    { new: true },
+  );
 
-export const deleteProjectService = async () => {};
+  if (!updatedProject) {
+    throw new ApiError(400, 'Project not found');
+  }
+
+  return updatedProject;
+};
+
+export const deleteProjectService = async (projectId: string) => {
+  const project = await Project.findByIdAndDelete(projectId);
+  if (!project) {
+    throw new ApiError(404, 'Project not found');
+  }
+};
 
 export const listProjectMembersService = async () => {};
 
