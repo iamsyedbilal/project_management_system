@@ -33,13 +33,9 @@ router.route('/').post(verifyJWT, authorizeRoles(UserRole.ADMIN), createProject)
 
 router.route('/:projectId').get(verifyJWT, getProjectDetails);
 
-router
-  .route('/:projectId')
-  .put(verifyJWT, authorizeRoles(UserRole.ADMIN), updateProject);
+router.route('/:projectId').put(verifyJWT, authorizeRoles(UserRole.ADMIN), updateProject);
 
-router
-  .route('/:projectId')
-  .delete(verifyJWT, authorizeRoles(UserRole.ADMIN), deleteProject);
+router.route('/:projectId').delete(verifyJWT, authorizeRoles(UserRole.ADMIN), deleteProject);
 
 router.route('/:projectId/members').get(verifyJWT, listProjectMembers);
 
