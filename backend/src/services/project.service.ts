@@ -28,7 +28,7 @@ export const createProjectService = async ({ data, userId }: CreateProjectServic
 };
 
 export const getProjectDetailsService = async (projectId: string) => {
-  const project = Project.findById(projectId);
+  const project = await Project.findById(projectId);
   if (!project) {
     throw new ApiError(400, 'Project not found');
   }

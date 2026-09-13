@@ -64,7 +64,7 @@ export const updateProject = asyncHandler(async (req: Request, res: Response) =>
 
   const updatedProject = await updateProjectService(projectId, { name, description });
 
-  return res.status(200).json(new ApiResponse(200, 'Project update successfully', updatedProject));
+  return res.status(200).json(new ApiResponse(200, 'Project updated successfully', updatedProject));
 });
 
 // Delete project - ADMIN
