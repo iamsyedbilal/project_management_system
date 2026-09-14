@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { AvailableUserRole } from '../utils/constants.js';
+import { UserRole } from '../utils/constants.js';
 
 export const createProjectValidation = z.object({
   name: z
@@ -26,7 +26,7 @@ export const addProjectMemberValidation = z.object({
 });
 
 export const updateMemberRoleValidation = z.object({
-  role: z.enum(AvailableUserRole),
+  role: z.enum([UserRole.ADMIN, UserRole.PROJECT_ADMIN, UserRole.MEMBER]),
 });
 
 export type CreateProjectInput = z.infer<typeof createProjectValidation>;
