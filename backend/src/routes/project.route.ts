@@ -22,8 +22,7 @@ import {
   updateProject,
 } from '../controllers/project.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
-import { validateProjectPermission } from '../middlewares/role.middleware.js';
-import { authorizeRoles } from '../middlewares/role.middleware.js';
+import { authorizeRoles, validateProjectPermission } from '../middlewares/role.middleware.js';
 import { UserRole } from '../utils/constants.js';
 
 const router = express.Router();
