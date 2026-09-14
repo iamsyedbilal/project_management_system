@@ -7,7 +7,7 @@ DELETE /:projectId - Delete project (secured, Admin only)
 GET /:projectId/members - List project members (secured)
 POST /:projectId/members - Add project member (secured, Admin only)
 PUT /:projectId/members/:userId - Update member role (secured, Admin only)
-DELETE /:projectId/members/:userId - Remove member (secured, Admin only)
+DELETE /:projectId/members/:userId - Remove project member (secured, Admin only)
 */
 import express from 'express';
 import {
@@ -23,13 +23,14 @@ import {
 } from '../controllers/project.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { validateProjectPermission } from '../middlewares/role.middleware.js';
+import { authorizeRoles } from '../middlewares/role.middleware.js';
 import { UserRole } from '../utils/constants.js';
 
 const router = express.Router();
 
 router.route('/').get(verifyJWT, listUserProjects);
 
-router.route('/').post(verifyJWT, createProject);
+router.route('/').post(verifyJWT, authorizeRoles(UserRole.ADMIN), createProject);
 
 router
   .route('/:projectId')
