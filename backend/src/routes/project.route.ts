@@ -22,18 +22,18 @@ import {
   updateProject,
 } from '../controllers/project.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
-import { authorizeRoles, validateProjectPermission } from '../middlewares/role.middleware.js';
+import {  validateProjectPermission } from '../middlewares/role.middleware.js';
 import { UserRole } from '../utils/constants.js';
 
 const router = express.Router();
 
 router.route('/').get(verifyJWT, listUserProjects);
 
-router.route('/').post(verifyJWT, authorizeRoles(UserRole.ADMIN), createProject);
+router.route('/').post(verifyJWT, createProject);
 
 router
   .route('/:projectId')
-  .get(verifyJWT, validateProjectPermission(), getProjectDetails);
+  .get(verifyJWT, validateProjectPermission([UserRole.ADMIN]), getProjectDetails);
 
 router
   .route('/:projectId')

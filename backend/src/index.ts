@@ -6,6 +6,7 @@ import logger from './utils/logger.js';
 
 const port = process.env.PORT;
 
+
 connectDB()
   .then(() => {
     app.listen(port, function () {
