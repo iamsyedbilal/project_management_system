@@ -78,28 +78,28 @@ Project Camp Backend is a RESTful API service designed to support collaborative 
 
 **Authentication Routes** (`/api/v1/auth/`)
 
-- `POST /register` - User registration
-- `POST /login` - User authentication
-- `POST /logout` - User logout (secured)
-- `GET /current-user` - Get current user info (secured)
-- `POST /change-password` - Change user password (secured)
-- `POST /refresh-token` - Refresh access token
-- `GET /verify-email/:verificationToken` - Email verification
-- `POST /forgot-password` - Request password reset
-- `POST /reset-password/:resetToken` - Reset forgotten password
-- `POST /resend-email-verification` - Resend verification email (secured)
+- `POST /register` - User registration ✅
+- `POST /login` - User authentication ✅
+- `POST /logout` - User logout (secured) ✅
+- `GET /current-user` - Get current user info (secured) ✅
+- `POST /change-password` - Change user password (secured) ✅
+- `POST /refresh-token` - Refresh access token ✅
+- `GET /verify-email/:verificationToken` - Email verification ✅
+- `POST /forgot-password` - Request password reset ✅
+- `POST /reset-password/:resetToken` - Reset forgotten password ✅
+- `POST /resend-email-verification` - Resend verification email (secured) ✅
 
 **Project Routes** (`/api/v1/projects/`)
 
-- `GET /` - List user projects (secured)
+- `GET /` - List user projects (secured) ✅
 - `POST /` - Create project (secured) ✅
 - `GET /:projectId` - Get project details (secured, role-based) ✅
 - `PUT /:projectId` - Update project (secured, Admin only) ✅
 - `DELETE /:projectId` - Delete project (secured, Admin only) ✅
 - `GET /:projectId/members` - List project members (secured) ✅
-- `POST /:projectId/members` - Add project member (secured, Admin only)
-- `PUT /:projectId/members/:userId` - Update member role (secured, Admin only)
-- `DELETE /:projectId/members/:userId` - Remove member (secured, Admin only)
+- `POST /:projectId/members` - Add project member (secured, Admin only) ✅
+- `PUT /:projectId/members/:userId` - Update member role (secured, Admin only) ✅
+- `DELETE /:projectId/members/:userId` - Remove member (secured, Admin only) ✅
 
 **Task Routes** (`/api/v1/tasks/`)
 

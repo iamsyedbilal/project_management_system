@@ -136,9 +136,15 @@ export const addProjectMemberService = async (
     throw new ApiError(404, 'Project not found');
   }
 
-  const user = await User.findOne({ email: data.email.toLowerCase() }).select('_id');
+  const user = await User.findOne({ email: data.email.toLowerCase() }).select(
+    '_id isEmailVerified',
+  );
   if (!user) {
     throw new ApiError(404, 'User not found');
+  }
+
+  if (!user.isEmailVerified) {
+    throw new ApiError(403, 'User must be verified before being added to a project');
   }
 
   const existingMember = await ProjectMember.exists({

@@ -45,7 +45,7 @@ router
 
 router
   .route('/:projectId/members')
-  .get(verifyJWT, validateProjectPermission(), listProjectMembers);
+  .get(verifyJWT, validateProjectPermission([UserRole.ADMIN]), listProjectMembers);
 
 router
   .route('/:projectId/members')
