@@ -29,11 +29,11 @@ const router = express.Router();
 
 router.route('/').get(verifyJWT, listUserProjects);
 
-router.route('/').post(verifyJWT, createProject);
+router.route('/').post(verifyJWT, validateProjectPermission([UserRole.ADMIN]),createProject);
 
 router
   .route('/:projectId')
-  .get(verifyJWT, validateProjectPermission([UserRole.ADMIN]), getProjectDetails);
+  .get(verifyJWT, validateProjectPermission(), getProjectDetails);
 
 router
   .route('/:projectId')
