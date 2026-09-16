@@ -6,18 +6,6 @@ import ProjectMember from '../models/projectMember.model.js';
 import { UserRole } from '../utils/constants.js';
 import type { UserRoleType } from '../utils/constants.js';
 
-export const authorizeRoles = (roles: UserRoleType[] = []) =>
-  asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new ApiError(401, 'Unauthorized');
-    }
-
-    if (roles.length > 0 && !roles.includes(req.user.role)) {
-      throw new ApiError(403, 'You do not have permission to perform this action');
-    }
-
-    next();
-  });
 
 export const validateProjectPermission = (roles: UserRoleType[] = []) =>
   asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
@@ -53,6 +41,19 @@ export const validateProjectPermission = (roles: UserRoleType[] = []) =>
     const projectRole = projectMember.role;
 
     if (roles.length > 0 && !roles.includes(projectRole)) {
+      throw new ApiError(403, 'You do not have permission to perform this action');
+    }
+
+    next();
+  });
+
+  export const authorizeRoles = (roles: UserRoleType[] = []) =>
+  asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new ApiError(401, 'Unauthorized');
+    }
+
+    if (roles.length > 0 && !roles.includes(req.user.role)) {
       throw new ApiError(403, 'You do not have permission to perform this action');
     }
 
