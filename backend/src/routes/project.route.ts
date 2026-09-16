@@ -1,14 +1,4 @@
-/*
-GET / - List user projects (secured)
-POST / - Create project (secured, Admin only)
-GET /:projectId - Get project details (secured)
-PUT /:projectId - Update project (secured, Admin only)
-DELETE /:projectId - Delete project (secured, Admin only)
-GET /:projectId/members - List project members (secured)
-POST /:projectId/members - Add project member (secured, Admin only)
-PUT /:projectId/members/:userId - Update member role (secured, Admin only)
-DELETE /:projectId/members/:userId - Remove project member (secured, Admin only)
-*/
+
 import express from 'express';
 import {
   addProjectMember,
