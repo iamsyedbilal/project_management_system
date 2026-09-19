@@ -55,7 +55,10 @@ export const createTaskService = async (params: {
     });
 
     if (!projectMember) {
-      throw new ApiError(400, 'Assigned user is not a member of this project');
+      throw new ApiError(
+        400,
+        'Assigned user is not a member of this project',
+      );
     }
 
     assignedTo = new mongoose.Types.ObjectId(data.assignedTo);
@@ -64,11 +67,13 @@ export const createTaskService = async (params: {
   const task = await Task.create({
     project: new mongoose.Types.ObjectId(projectId),
     title: data.title,
-    description: data.description,
-    assignedTo,
     createdBy: new mongoose.Types.ObjectId(createdBy),
-    status: data.status,
     attachments,
+    ...(data.description !== undefined
+      ? { description: data.description }
+      : {}),
+    ...(assignedTo !== undefined ? { assignedTo } : {}),
+    ...(data.status !== undefined ? { status: data.status } : {}),
   });
 
   return task;
