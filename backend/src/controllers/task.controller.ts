@@ -16,30 +16,35 @@ import { createTaskValidator } from '../validators/task.validator.js';
 
 export const getTasks = asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
+
   if (typeof projectId !== 'string') {
     throw new ApiError(400, 'Invalid project ID');
   }
+
   const tasks = await getTasksService(projectId);
 
-  return res.status(201).json(new ApiResponse(201, 'Task fetched successfully', tasks));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Tasks fetched successfully', tasks));
 });
 
 export const createTask = asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
-  if (typeof projectId !== 'string') {
-    throw new ApiError(400, 'Invalid project ID');
-  }
+    const { projectId } = req.params;
+    if (typeof projectId !== 'string') {
+      throw new ApiError(400, 'Invalid project ID');
+    }
+    
+    const result = createTaskValidator.safeParse(req.body)
 
-  const result = createTaskValidator.safeParse(req.body);
+    if (!result.success) {
+        throw new ApiError(400, result.error.issues[0]?.message ?? 'Invalid request data');
+      }
 
-  if (!result.success) {
-    throw new ApiError(400, result.error.issues[0]?.message ?? 'Invalid request data');
-  }
+      await createTaskService({
+        data:result.data,
+        projectId
+      })
 
-  await createTaskService({
-    data: result.data,
-    projectId,
-  });
 });
 
 export const getTaskById = asyncHandler(async (req: Request, res: Response) => {});
