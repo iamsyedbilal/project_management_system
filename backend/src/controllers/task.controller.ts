@@ -29,22 +29,43 @@ export const getTasks = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const createTask = asyncHandler(async (req: Request, res: Response) => {
-    const { projectId } = req.params;
-    if (typeof projectId !== 'string') {
-      throw new ApiError(400, 'Invalid project ID');
-    }
-    
-    const result = createTaskValidator.safeParse(req.body)
+  const { projectId } = req.params;
 
-    if (!result.success) {
-        throw new ApiError(400, result.error.issues[0]?.message ?? 'Invalid request data');
-      }
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
 
-      await createTaskService({
-        data:result.data,
-        projectId
-      })
+  if (!req.user?._id) {
+    throw new ApiError(401, 'Unauthorized');
+  }
 
+  const result = createTaskValidator.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      result.error.issues[0]?.message ?? 'Invalid request data',
+    );
+  }
+
+  const files = Array.isArray(req.files) ? req.files : [];
+
+  const attachments = files.map((file) => ({
+    url: `/images/${file.filename}`,
+    mimeType: file.mimetype,
+    size: file.size,
+  }));
+
+  const task = await createTaskService({
+    data: result.data,
+    projectId,
+    createdBy: req.user._id.toString(),
+    attachments,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, 'Task created successfully', task));
 });
 
 export const getTaskById = asyncHandler(async (req: Request, res: Response) => {});
