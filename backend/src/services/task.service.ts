@@ -17,7 +17,10 @@ export const getTasksService = async (projectId: string) => {
   return tasks;
 };
 
-export const createTaskService = async () => {};
+export const createTaskService = async (_params: {
+  data: Record<string, unknown>;
+  projectId: string;
+}) => {};
 
 export const getTaskByIdService = async () => {};
 

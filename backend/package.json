@@ -24,6 +24,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mailgen": "^2.0.7",
+    "@types/multer": "^2.2.0",
     "@types/node": "^26.5.0",
     "@types/nodemailer": "^8.0.1",
     "nodemon": "^3.1.14",
@@ -41,6 +42,7 @@
     "jsonwebtoken": "^9.0.3",
     "mailgen": "^2.0.36",
     "mongoose": "^9.9.5",
+    "multer": "^2.4.0",
     "nodemailer": "^10.0.1",
     "winston": "^3.19.0",
     "zod": "^4.6.1"
