@@ -79,7 +79,31 @@ export const createTaskService = async (params: {
   return task;
 };
 
-export const getTaskByIdService = async () => {};
+export const getTaskByIdService = async (
+  projectId: string,
+  taskId: string,
+) => {
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  const task = await Task.findOne({
+    _id: new mongoose.Types.ObjectId(taskId),
+    project: new mongoose.Types.ObjectId(projectId),
+  })
+    .populate('assignedTo', 'avatar username fullName')
+    .populate('createdBy', 'avatar username fullName');
+
+  if (!task) {
+    throw new ApiError(404, 'Task not found');
+  }
+
+  return task;
+};
 
 export const updateTaskService = async () => {};
 
