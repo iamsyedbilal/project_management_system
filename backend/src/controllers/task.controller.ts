@@ -68,7 +68,23 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(201, 'Task created successfully', task));
 });
 
-export const getTaskById = asyncHandler(async (req: Request, res: Response) => {});
+export const getTaskById = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
+
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof taskId !== 'string') {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  const task = await getTaskByIdService(projectId, taskId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Task fetched successfully', task));
+});
 
 export const updateTask = asyncHandler(async (req: Request, res: Response) => {});
 
