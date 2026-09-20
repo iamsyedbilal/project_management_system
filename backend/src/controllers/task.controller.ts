@@ -12,7 +12,10 @@ import {
   updateSubTaskService,
   updateTaskService,
 } from '../services/task.service.js';
-import { createTaskValidator } from '../validators/task.validator.js';
+import {
+  createTaskValidator,
+  updateTaskValidator,
+} from '../validators/task.validator.js';
 
 export const getTasks = asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
@@ -68,11 +71,68 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(201, 'Task created successfully', task));
 });
 
-export const getTaskById = asyncHandler(async (req: Request, res: Response) => {});
+export const getTaskById = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
 
-export const updateTask = asyncHandler(async (req: Request, res: Response) => {});
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
 
-export const deleteTask = asyncHandler(async (req: Request, res: Response) => {});
+  if (typeof taskId !== 'string') {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  const task = await getTaskByIdService(projectId, taskId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Task fetched successfully', task));
+});
+
+export const updateTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
+
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof taskId !== 'string') {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  const result = updateTaskValidator.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      result.error.issues[0]?.message ?? 'Invalid request data',
+    );
+  }
+
+  const task = await updateTaskService(projectId, taskId, result.data);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Task updated successfully', task));
+});
+
+export const deleteTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
+
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof taskId !== 'string') {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  await deleteTaskService(projectId, taskId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Task deleted successfully', null));
+});
 
 export const createSubTask = asyncHandler(async (req: Request, res: Response) => {});
 
