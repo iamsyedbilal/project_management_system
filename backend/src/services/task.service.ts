@@ -179,7 +179,29 @@ export const updateTaskService = async (
   return updatedTask;
 };
 
-export const deleteTaskService = async () => {};
+export const deleteTaskService = async (
+  projectId: string,
+  taskId: string,
+) => {
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(taskId)) {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  const task = await Task.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(taskId),
+    project: new mongoose.Types.ObjectId(projectId),
+  });
+
+  if (!task) {
+    throw new ApiError(404, 'Task not found');
+  }
+
+  return task;
+};
 
 export const createSubTaskService = async () => {};
 
