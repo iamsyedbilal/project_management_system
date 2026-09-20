@@ -23,3 +23,13 @@ export const createTaskValidator = z.object({
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskValidator>;
+
+
+export const updateTaskValidator = createTaskValidator
+  .partial()
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    'At least one field is required to update the task',
+  );
+
+export type UpdateTaskInput = z.infer<typeof updateTaskValidator>;
