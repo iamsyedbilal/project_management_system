@@ -116,7 +116,23 @@ export const updateTask = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, 'Task updated successfully', task));
 });
 
-export const deleteTask = asyncHandler(async (req: Request, res: Response) => {});
+export const deleteTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
+
+  if (typeof projectId !== 'string') {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof taskId !== 'string') {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  await deleteTaskService(projectId, taskId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Task deleted successfully', null));
+});
 
 export const createSubTask = asyncHandler(async (req: Request, res: Response) => {});
 
