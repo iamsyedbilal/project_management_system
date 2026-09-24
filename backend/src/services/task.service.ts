@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import Project from '../models/project.model.js';
-import ProjectMember from '../models/projectMember.model.js';\nimport SubTask from '../models/subTask.model.js';\nimport { UserRole } from '../utils/constants.js';\nimport type { CreateSubTaskInput, UpdateSubTaskInput } from '../validators/task.validator.js';
+import ProjectMember from '../models/projectMember.model.js';
+import SubTask from '../models/subTask.model.js';
+import { UserRole } from '../utils/constants.js';
+import type { CreateSubTaskInput, UpdateSubTaskInput } from '../validators/task.validator.js';
 import Task from '../models/task.model.js';
 import ApiError from '../utils/apiError.js';
 import type {
