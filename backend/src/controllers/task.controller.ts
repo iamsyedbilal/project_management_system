@@ -13,7 +13,9 @@ import {
   updateTaskService,
 } from '../services/task.service.js';
 import {
+  createSubTaskValidator,
   createTaskValidator,
+  updateSubTaskValidator,
   updateTaskValidator,
 } from '../validators/task.validator.js';
 
@@ -134,8 +136,93 @@ export const deleteTask = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, 'Task deleted successfully', null));
 });
 
-export const createSubTask = asyncHandler(async (req: Request, res: Response) => {});
+export const createSubTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, taskId } = req.params;
 
-export const updateSubTask = asyncHandler(async (req: Request, res: Response) => {});
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
 
-export const deleteSubTask = asyncHandler(async (req: Request, res: Response) => {});
+  if (typeof taskId !== 'string' || !taskId) {
+    throw new ApiError(400, 'Invalid task ID');
+  }
+
+  if (!req.user?._id) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const result = createSubTaskValidator.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      result.error.issues[0]?.message ?? 'Invalid request data',
+    );
+  }
+
+  const subTask = await createSubTaskService({
+    data: result.data,
+    projectId,
+    taskId,
+    createdBy: req.user._id.toString(),
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, 'Subtask created successfully', subTask));
+});
+
+export const updateSubTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, subTaskId } = req.params;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof subTaskId !== 'string' || !subTaskId) {
+    throw new ApiError(400, 'Invalid subtask ID');
+  }
+
+  if (!req.user?._id) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const result = updateSubTaskValidator.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      result.error.issues[0]?.message ?? 'Invalid request data',
+    );
+  }
+
+  const subTask = await updateSubTaskService(
+    projectId,
+    subTaskId,
+    req.user._id.toString(),
+    req.user.role,
+    result.data,
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Subtask updated successfully', subTask));
+});
+
+export const deleteSubTask = asyncHandler(async (req: Request, res: Response) => {
+  const { projectId, subTaskId } = req.params;
+
+  if (typeof projectId !== 'string' || !projectId) {
+    throw new ApiError(400, 'Invalid project ID');
+  }
+
+  if (typeof subTaskId !== 'string' || !subTaskId) {
+    throw new ApiError(400, 'Invalid subtask ID');
+  }
+
+  await deleteSubTaskService(projectId, subTaskId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Subtask deleted successfully', null));
+});
