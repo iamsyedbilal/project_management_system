@@ -129,6 +129,18 @@ export const loginUserService = async (userData: LoginUserServiceData) => {
 };
 
 // Logout user by removing the refresh token from the database
+export const getCurrentUserService = async (userId: string) => {
+  const user = await User.findById(userId).select(
+    '-password -refreshToken -emailVerificationToken -emailVerificationExpiry',
+  );
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  return user;
+};
+
 export const logoutUserService = async (userId: string) => {
   const user = await User.findByIdAndUpdate(
     userId,
