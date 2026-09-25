@@ -11,7 +11,6 @@ import {
 } from '../controllers/task.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import {
-  authorizeRoles,
   validateProjectPermission,
 } from '../middlewares/role.middleware.js';
 import { uploadTaskAttachments } from '../middlewares/upload.middleware.js';
@@ -25,8 +24,7 @@ router
   .route('/:projectId')
   .post(
     verifyJWT,
-    authorizeRoles([UserRole.ADMIN, UserRole.PROJECT_ADMIN]),
-    validateProjectPermission(),
+    validateProjectPermission([UserRole.PROJECT_ADMIN]),
     uploadTaskAttachments,
     createTask,
   );
@@ -39,8 +37,7 @@ router
   .route('/:projectId/t/:taskId')
   .put(
     verifyJWT,
-    authorizeRoles([UserRole.ADMIN, UserRole.PROJECT_ADMIN]),
-    validateProjectPermission(),
+    validateProjectPermission([UserRole.PROJECT_ADMIN]),
     updateTask,
   );
 
@@ -48,8 +45,7 @@ router
   .route('/:projectId/t/:taskId')
   .delete(
     verifyJWT,
-    authorizeRoles([UserRole.ADMIN, UserRole.PROJECT_ADMIN]),
-    validateProjectPermission(),
+    validateProjectPermission([UserRole.PROJECT_ADMIN]),
     deleteTask,
   );
 
@@ -57,8 +53,7 @@ router
   .route('/:projectId/t/:taskId/subtasks')
   .post(
     verifyJWT,
-    authorizeRoles([UserRole.ADMIN, UserRole.PROJECT_ADMIN]),
-    validateProjectPermission(),
+    validateProjectPermission([UserRole.PROJECT_ADMIN]),
     createSubTask,
   );
 
@@ -70,8 +65,7 @@ router
   .route('/:projectId/st/:subTaskId')
   .delete(
     verifyJWT,
-    authorizeRoles([UserRole.ADMIN, UserRole.PROJECT_ADMIN]),
-    validateProjectPermission(),
+    validateProjectPermission([UserRole.PROJECT_ADMIN]),
     deleteSubTask,
   );
 
