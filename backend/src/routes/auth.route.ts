@@ -27,7 +27,7 @@ router.route('/refresh-token').post(refreshAccessToken);
 
 router.route('/verify-email/:verificationToken').get(verifyEmail);
 
-router.route('/resend-email-verification').post(resendEmailVerification);
+router.route('/resend-email-verification').post(verifyJWT, resendEmailVerification);
 
 router.route('/forgot-password').post(forgotPasswordRequest);
 
