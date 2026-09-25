@@ -3,6 +3,7 @@ import ApiResponse from '../utils/apiResponse.js';
 import type { Request, Response } from 'express';
 import {
   changeCurrentPasswordService,
+  getCurrentUserService,
   forgotPasswordRequestService,
   loginUserService,
   logoutUserService,
@@ -68,6 +69,19 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
         user: loggedInUser,
       }),
     );
+});
+
+// Get current authenticated user
+export const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?._id) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const user = await getCurrentUserService(req.user._id.toString());
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Current user fetched successfully', user));
 });
 
 // Logout the authenticated user
