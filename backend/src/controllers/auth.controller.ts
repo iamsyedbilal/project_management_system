@@ -19,7 +19,6 @@ import {
   forgotPasswordValidation,
   resetForgotPasswordValidation,
   changeCurrentPasswordValidation,
-  resendEmailVerificationValidation,
 } from '../validators/auth.validator.js';
 import ApiError from '../utils/apiError.js';
 import {
@@ -137,16 +136,16 @@ export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
 
 // Resend Email Verification
 export const resendEmailVerification = asyncHandler(async (req: Request, res: Response) => {
-  const result = resendEmailVerificationValidation.safeParse(req.body);
-
-  if (!result.success) {
-    throw new ApiError(400, result.error.issues[0]?.message ?? 'Invalid request data');
+  if (!req.user?.email) {
+    throw new ApiError(401, 'Unauthorized');
   }
 
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  await resendEmailVerificationService(baseUrl, result.data.email);
+  await resendEmailVerificationService(baseUrl, req.user.email);
 
-  return res.status(200).json(new ApiResponse(200, 'Mail has been sent to your email ID', {}));
+  return res.status(200).json(
+    new ApiResponse(200, 'Mail has been sent to your email ID', {}),
+  );
 });
 
 // Forgot Password Request
