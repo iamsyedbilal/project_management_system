@@ -3,6 +3,6 @@ import { healthCheck } from '../controllers/healthChecker.controller.js';
 
 const router = express.Router();
 
-router.route('/health').get(healthCheck);
+router.route('/healthcheck/').get(healthCheck);
 
 export default router;
