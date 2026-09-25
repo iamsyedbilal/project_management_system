@@ -34,7 +34,7 @@ import { errorHandler } from './middlewares/errorHandler.middleware.js';
 
 app.use('/api/v1', healthRoute);
 app.use('/api/v1/auth', authRoute);
-app.use('/api/v1/project', projectRoute);
+app.use('/api/v1/projects', projectRoute);
 app.use('/api/v1/tasks', taskRoute);
 app.use('/api/v1/notes', noteRoute);
 
