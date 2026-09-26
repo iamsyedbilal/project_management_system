@@ -1,14 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
-
-function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<div className="page"><h1>Login</h1></div>} />
-      <Route path="/register" element={<div className="page"><h1>Register</h1></div>} />
-    </Routes>
-  )
-}
-
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import Dashboard from './pages/dashboard/Dashboard'
+function App(){return <Routes><Route path="/" element={<Navigate to="/login" replace/>}/><Route path="/login" element={<Login/>}/><Route path="/register" element={<Register/>}/><Route path="/forgot-password" element={<ForgotPassword/>}/><Route path="/dashboard" element={<Dashboard/>}/></Routes>}
 export default App
