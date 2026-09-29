@@ -6,7 +6,7 @@ import { loginUser } from "../../api/auth.api";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await loginUser({ email, password });
+      await loginUser({ identifier, password });
       navigate("/dashboard");
     } catch (err: unknown) {
       setError(
@@ -34,11 +34,12 @@ export default function Login() {
         <p>Project Management System</p>
         {error && <div className="error">{error}</div>}
         <label>
-          Email
+          Email or username
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            autoComplete="username"
             required
           />
         </label>

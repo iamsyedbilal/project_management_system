@@ -7,7 +7,6 @@ export default function Register() {
   const [form, setForm] = useState({
     username: "",
     email: "",
-    fullName: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -41,14 +40,7 @@ export default function Register() {
             required
           />
         </label>
-        <label>
-          Full name
-          <input
-            value={form.fullName}
-            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-            required
-          />
-        </label>
+        
         <label>
           Email
           <input

@@ -3,11 +3,10 @@ import { api } from "./axios";
 export interface RegisterPayload {
   username: string;
   email: string;
-  fullName: string;
   password: string;
 }
 export interface LoginPayload {
-  email: string;
+  identifier: string;
   password: string;
 }
 
