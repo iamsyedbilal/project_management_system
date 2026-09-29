@@ -1,8 +1,11 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { addProjectMember, getProjectMembers, removeProjectMember, updateMemberRole, type MemberRole, type ProjectMember } from '../../api/member.api'
 
 const roles: MemberRole[] = ['project_admin', 'member']
+
+type ApiError = { response?: { data?: { message?: string } } }
 
 export default function ProjectMembers() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -13,17 +16,31 @@ export default function ProjectMembers() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const load = async () => {
-    if (!projectId) return
+  const load = async (id = projectId) => {
+    if (!id) return
     try {
-      const response = await getProjectMembers(projectId)
+      const response = await getProjectMembers(id)
       setMembers(response.data ?? response)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Unable to load project members')
+    } catch (err: unknown) {
+      setError((err as ApiError).response?.data?.message || 'Unable to load project members')
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { void load() }, [projectId])
+  useEffect(() => {
+    if (!projectId) return
+    let active = true
+    getProjectMembers(projectId)
+      .then(response => {
+        if (active) setMembers(response.data ?? response)
+      })
+      .catch((err: unknown) => {
+        if (active) setError((err as ApiError).response?.data?.message || 'Unable to load project members')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [projectId])
 
   const addMember = async (event: FormEvent) => {
     event.preventDefault()
@@ -34,8 +51,8 @@ export default function ProjectMembers() {
       setEmail('')
       setRole('member')
       await load()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Unable to add member')
+    } catch (err: unknown) {
+      setError((err as ApiError).response?.data?.message || 'Unable to add member')
     } finally { setSaving(false) }
   }
 
@@ -44,7 +61,7 @@ export default function ProjectMembers() {
     try {
       await updateMemberRole(projectId, userId, nextRole)
       await load()
-    } catch (err: any) { setError(err.response?.data?.message || 'Unable to update member role') }
+    } catch (err: unknown) { setError((err as ApiError).response?.data?.message || 'Unable to update member role') }
   }
 
   const remove = async (userId: string) => {
@@ -52,7 +69,7 @@ export default function ProjectMembers() {
     try {
       await removeProjectMember(projectId, userId)
       await load()
-    } catch (err: any) { setError(err.response?.data?.message || 'Unable to remove member') }
+    } catch (err: unknown) { setError((err as ApiError).response?.data?.message || 'Unable to remove member') }
   }
 
   return <main className="page">
