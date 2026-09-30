@@ -60,36 +60,6 @@ The frontend uses a playful purple/fuchsia Tailwind UI, while the backend provid
 - Nodemailer
 - Multer
 
-## 🏗️ Project Structure
-
-\`\`\`text
-project_management_system/
-│
-├── 📁 backend/                         # REST API & business logic
-│   ├── 📁 src/
-│   │   ├── 📁 controllers/             # Request handlers
-│   │   ├── 📁 middlewares/             # Auth, RBAC & uploads
-│   │   ├── 📁 models/                  # Mongoose schemas
-│   │   ├── 📁 routes/                  # API route definitions
-│   │   ├── 📁 services/                # Business logic
-│   │   └── 📁 utils/                   # Helpers & shared utilities
-│   ├── 📄 PRD.md                       # Product requirements
-│   └── 📄 package.json
-│
-├── 📁 frontend/                        # React web application
-│   ├── 📁 src/
-│   │   ├── 📁 api/                     # Backend API clients
-│   │   ├── 📁 components/              # Reusable UI components
-│   │   ├── 📁 context/                # Global application state
-│   │   ├── 📁 hooks/                   # Custom React hooks
-│   │   ├── 📁 pages/                   # Application screens
-│   │   ├── 📁 routes/                  # Route configuration
-│   │   └── 📁 types/                   # TypeScript types
-│   └── 📄 package.json
-│
-└── 📄 README.md                        # Project documentation
-\`\`\`
-
 ## 🚦 Getting Started
 
 ### 1. Clone
