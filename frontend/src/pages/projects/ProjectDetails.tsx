@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { deleteProject, getProject, updateProject } from "../../api/project.api";
 import type { Project } from "../../types/project";
@@ -9,7 +10,7 @@ export default function ProjectDetails() {
   const { isAdmin, loading: roleLoading }=useProjectRole(projectId);
   const [project,setProject]=useState<Project|null>(null); const [editing,setEditing]=useState(false); const [name,setName]=useState(""); const [description,setDescription]=useState(""); const [error,setError]=useState("");
   useEffect(()=>{if(!projectId)return;getProject(projectId).then(r=>{const p=r.data??r;setProject(p);setName(p.name||"");setDescription(p.description||"");}).catch(e=>setError(e.response?.data?.message||"Unable to load project"));},[projectId]);
-  const save=async(e:React.FormEvent)=>{e.preventDefault();if(!projectId)return;try{const r=await updateProject(projectId,{name,description});setProject(r.data??r);setEditing(false);}catch(e){setError((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to update project");}};
+  const save=async(e:FormEvent)=>{e.preventDefault();if(!projectId)return;try{const r=await updateProject(projectId,{name,description});setProject(r.data??r);setEditing(false);}catch(e){setError((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to update project");}};
   const remove=async()=>{if(!projectId||!window.confirm("Delete this project?"))return;try{await deleteProject(projectId);navigate("/projects");}catch(e){setError((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to delete project");}};
   if(!project)return <main className="page"><Link to="/projects">← Projects</Link>{error?<div className="error">{error}</div>:<p>Loading project...</p>}</main>;
   return <main className="page"><Link to="/projects">← Projects</Link>{error&&<div className="error">{error}</div>}
