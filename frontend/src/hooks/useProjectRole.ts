@@ -5,17 +5,14 @@ import { useAuthContext } from "../context/AuthContext";
 export function useProjectRole(projectId?: string) {
   const { user } = useAuthContext();
   const [role, setRole] = useState<MemberRole | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     let active = true;
-    if (!projectId || !user) {
-      setRole(null); setLoading(false); return;
+    if (!projectId || !user || isAdmin) {
+      return;
     }
-    if (user.role === "admin") {
-      setRole("admin"); setLoading(false); return;
-    }
-    setLoading(true);
     getProjectMembers(projectId)
       .then((response) => {
         const members = response.data ?? response;
@@ -24,10 +21,24 @@ export function useProjectRole(projectId?: string) {
           : undefined;
         if (active) setRole(current?.role ?? null);
       })
-      .catch(() => { if (active) setRole(null); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [projectId, user]);
+      .catch(() => {
+        if (active) setRole(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [projectId, user, isAdmin]);
 
-  return { role, loading, isAdmin: user?.role === "admin" || role === "admin", isProjectAdmin: user?.role === "admin" || role === "admin" || role === "project_admin" };
+  const currentRole = !projectId || !user ? null : isAdmin ? "admin" : role;
+
+  return {
+    role: currentRole,
+    loading: Boolean(projectId && user && !isAdmin && loading),
+    isAdmin: isAdmin || role === "admin",
+    isProjectAdmin:
+      isAdmin || role === "admin" || role === "project_admin",
+  };
 }

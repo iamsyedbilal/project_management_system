@@ -1,5 +1,107 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../api/auth.api";
-export default function Register(){const navigate=useNavigate();const [form,setForm]=useState({username:"",email:"",fullName:"",password:""});const [error,setError]=useState("");const [loading,setLoading]=useState(false);const submit=async(e:FormEvent)=>{e.preventDefault();setLoading(true);setError("");try{await registerUser(form);navigate("/login");}catch(err:unknown){setError((err as {response?:{data?:{message?:string}}}).response?.data?.message||"Registration failed");}finally{setLoading(false);}};const field="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";return <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f7f7fb] px-4 py-8"><div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-violet-300/35 blur-3xl"/><div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl"/><form onSubmit={submit} className="relative w-full max-w-lg rounded-[2rem] border border-white bg-white/90 p-7 shadow-[0_25px_80px_rgba(76,29,149,.15)] backdrop-blur-xl sm:p-9"><span className="inline-flex rounded-2xl bg-fuchsia-100 px-3 py-1 text-xs font-bold uppercase tracking-[.18em] text-fuchsia-700">FlowBoard</span><h1 className="mt-4 font-display text-4xl font-bold tracking-tight">Build your workspace<span className="text-fuchsia-500">.</span></h1>{error&&<div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}<div className="mt-6 grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">Full name<input className={field} value={form.fullName} onChange={e=>setForm({...form,fullName:e.target.value})} required/></label><label className="grid gap-2 text-sm font-semibold text-slate-700">Username<input className={field} value={form.username} onChange={e=>setForm({...form,username:e.target.value})} required/></label><label className="grid gap-2 text-sm font-semibold text-slate-700">Email<input className={field} type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/></label><label className="grid gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">Password<input className={field} type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/></label></div><button disabled={loading} className="mt-6 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-violet-200 disabled:opacity-60">{loading?"Creating...":"Create account →"}</button><p className="mt-5 text-center text-sm text-slate-500">Already have an account? <Link className="font-bold text-violet-600" to="/login">Sign in</Link></p></form></main>}
+export default function Register() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    fullName: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await registerUser(form);
+      navigate("/login");
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Registration failed",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  const field =
+    "rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";
+  return (
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f7f7fb] px-4 py-8">
+      <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-violet-300/35 blur-3xl" />
+      <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl" />
+      <form
+        onSubmit={submit}
+        className="relative w-full max-w-lg rounded-4xl border border-white bg-white/90 p-7 shadow-[0_25px_80px_rgba(76,29,149,.15)] backdrop-blur-xl sm:p-9"
+      >
+        <span className="inline-flex rounded-2xl bg-fuchsia-100 px-3 py-1 text-xs font-bold uppercase tracking-[.18em] text-fuchsia-700">
+          FlowBoard
+        </span>
+        <h1 className="mt-4 font-display text-4xl font-bold tracking-tight">
+          Build your workspace<span className="text-fuchsia-500">.</span>
+        </h1>
+        {error && (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">
+            Full name
+            <input
+              className={field}
+              value={form.fullName}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              required
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">
+            Username
+            <input
+              className={field}
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              required
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">
+            Email
+            <input
+              className={field}
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">
+            Password
+            <input
+              className={field}
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+            />
+          </label>
+        </div>
+        <button
+          disabled={loading}
+          className="mt-6 w-full rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-violet-200 disabled:opacity-60"
+        >
+          {loading ? "Creating..." : "Create account →"}
+        </button>
+        <p className="mt-5 text-center text-sm text-slate-500">
+          Already have an account?{" "}
+          <Link className="font-bold text-violet-600" to="/login">
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </main>
+  );
+}

@@ -1,2 +1,307 @@
-import { useEffect,useState } from "react";import type { FormEvent } from "react";import { Link,useNavigate,useParams } from "react-router-dom";import { createSubTask,deleteSubTask,deleteTask,getTask,updateSubTask,updateTask,type SubTask,type Task } from "../../api/task.api";import type { TaskStatus } from "../../types/task";import { useProjectRole } from "../../hooks/useProjectRole";import { getProjectMembers,type ProjectMember } from "../../api/member.api";
-const statuses:TaskStatus[]=["todo","in_progress","done"];export default function TaskDetails(){const {projectId,taskId}=useParams<{projectId:string;taskId:string}>();const navigate=useNavigate();const {isProjectAdmin}=useProjectRole(projectId);const [task,setTask]=useState<Task|null>(null);const [subtasks,setSubtasks]=useState<SubTask[]>([]);const [title,setTitle]=useState("");const [description,setDescription]=useState("");const [status,setStatus]=useState<TaskStatus>("todo");const [assignedTo,setAssignedTo]=useState("");const [subTitle,setSubTitle]=useState("");const [subAssignedTo,setSubAssignedTo]=useState("");const [members,setMembers]=useState<ProjectMember[]>([]);const [error,setError]=useState("");const load=async()=>{if(!projectId||!taskId)return;try{const r=await getTask(projectId,taskId);const d=r.data??r;setTask(d);setTitle(d.title||"");setDescription(d.description||"");setStatus(d.status||"todo");setAssignedTo(typeof d.assignedTo==="object"&&d.assignedTo?d.assignedTo._id:"");setSubtasks(d.subtasks||[]);}catch(e){setError("Unable to load task");}};useEffect(()=>{void load();if(projectId)getProjectMembers(projectId).then(r=>setMembers(r.data??r)).catch(()=>setMembers([]));},[projectId,taskId]);const save=async(e:FormEvent)=>{e.preventDefault();if(!projectId||!taskId)return;try{await updateTask(projectId,taskId,{title,description,status,...(assignedTo?{assignedTo}:{})});await load();}catch(e){setError("Unable to update task");}};const addSub=async(e:FormEvent)=>{e.preventDefault();if(!projectId||!taskId)return;try{await createSubTask(projectId,taskId,{title:subTitle,...(subAssignedTo?{assignedTo:subAssignedTo}:{})});setSubTitle("");setSubAssignedTo("");await load();}catch(e){setError("Unable to create subtask");}};const toggle=async(s:SubTask)=>{if(!projectId)return;try{await updateSubTask(projectId,s._id,{isCompleted:!s.isCompleted});await load();}catch(e){setError("Unable to update subtask");}};const removeSub=async(id:string)=>{if(!projectId||!window.confirm("Delete this subtask?"))return;await deleteSubTask(projectId,id);await load();};const removeTask=async()=>{if(!projectId||!taskId||!window.confirm("Delete this task?"))return;await deleteTask(projectId,taskId);navigate(`/projects/${projectId}/tasks`);};if(!task)return <main className="grid min-h-screen place-items-center bg-[#f7f7fb]">{error?<div className="rounded-2xl bg-red-50 p-4 text-red-700">{error}</div>:<p className="text-slate-500">Loading task...</p>}</main>;const field="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";return <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10"><div className="mx-auto max-w-5xl"><Link className="font-bold text-violet-600" to={`/projects/${projectId}/tasks`}>← Tasks</Link><div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${task.status==="done"?"bg-emerald-100 text-emerald-700":task.status==="in_progress"?"bg-amber-100 text-amber-700":"bg-slate-100 text-slate-600"}`}>{task.status.replace("_"," ")}</span><h1 className="mt-3 font-display text-4xl font-bold">{task.title}<span className="text-fuchsia-500">.</span></h1></div>{isProjectAdmin&&<button onClick={()=>void removeTask()} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 font-bold text-red-600">Delete task</button>}</div>{error&&<div className="mt-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</div>}<div className="mt-7 grid gap-6 lg:grid-cols-[1.4fr_1fr]"><section className="rounded-[1.75rem] bg-white p-6 shadow-lg">{isProjectAdmin?<form onSubmit={save} className="grid gap-4"><label className="grid gap-2 text-sm font-bold">Title<input className={field} value={title} onChange={e=>setTitle(e.target.value)} required/></label><label className="grid gap-2 text-sm font-bold">Description<textarea className={field} value={description} onChange={e=>setDescription(e.target.value)} rows={5}/></label><label className="grid gap-2 text-sm font-bold">Assignee<select className={field} value={assignedTo} onChange={e=>setAssignedTo(e.target.value)}><option value="">Unassigned</option>{members.map(m=>m.user&&<option key={m.user._id} value={m.user._id}>{m.user.fullName||m.user.username||m.user.email}</option>)}</select></label><label className="grid gap-2 text-sm font-bold">Status<select className={field} value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>{statuses.map(s=><option key={s} value={s}>{s.replace("_"," ")}</option>)}</select></label><button className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 py-3 font-bold text-white">Save changes</button></form>:<div><h2 className="font-display text-xl font-bold">Description</h2><p className="mt-3 whitespace-pre-wrap leading-7 text-slate-600">{task.description||"No description"}</p></div>}</section><section className="rounded-[1.75rem] bg-white p-6 shadow-lg"><h2 className="font-display text-xl font-bold">Subtasks ✦</h2>{isProjectAdmin&&<form onSubmit={addSub} className="mt-4 grid gap-2"><input className={field} placeholder="Subtask title" value={subTitle} onChange={e=>setSubTitle(e.target.value)} required/><select className={field} value={subAssignedTo} onChange={e=>setSubAssignedTo(e.target.value)}><option value="">Unassigned</option>{members.map(m=>m.user&&<option key={m.user._id} value={m.user._id}>{m.user.fullName||m.user.username||m.user.email}</option>)}</select><button className="rounded-2xl bg-violet-100 py-3 font-bold text-violet-700">Add subtask +</button></form>}<div className="mt-5 grid gap-2">{subtasks.length===0?<p className="text-sm text-slate-400">No subtasks yet.</p>:subtasks.map(s=><div key={s._id} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3"><input className="h-5 w-5 accent-violet-600" type="checkbox" checked={Boolean(s.isCompleted)} onChange={()=>void toggle(s)}/><span className={`flex-1 font-medium ${s.isCompleted?"text-slate-400 line-through":""}`}>{s.title}</span>{isProjectAdmin&&<button className="text-sm font-bold text-red-600" onClick={()=>void removeSub(s._id)}>Delete</button>}</div>)}</div></section></div></div></main>}
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  createSubTask,
+  deleteSubTask,
+  deleteTask,
+  getTask,
+  updateSubTask,
+  updateTask,
+  type SubTask,
+  type Task,
+} from "../../api/task.api";
+import type { TaskStatus } from "../../types/task";
+import { useProjectRole } from "../../hooks/useProjectRole";
+import { getProjectMembers, type ProjectMember } from "../../api/member.api";
+const statuses: TaskStatus[] = ["todo", "in_progress", "done"];
+export default function TaskDetails() {
+  const { projectId, taskId } = useParams<{
+    projectId: string;
+    taskId: string;
+  }>();
+  const navigate = useNavigate();
+  const { isProjectAdmin } = useProjectRole(projectId);
+  const [task, setTask] = useState<Task | null>(null);
+  const [subtasks, setSubtasks] = useState<SubTask[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<TaskStatus>("todo");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [subTitle, setSubTitle] = useState("");
+  const [subAssignedTo, setSubAssignedTo] = useState("");
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [error, setError] = useState("");
+  const load = async () => {
+    if (!projectId || !taskId) return;
+    try {
+      const r = await getTask(projectId, taskId);
+      const d = r.data ?? r;
+      setTask(d);
+      setTitle(d.title || "");
+      setDescription(d.description || "");
+      setStatus(d.status || "todo");
+      setAssignedTo(
+        typeof d.assignedTo === "object" && d.assignedTo
+          ? d.assignedTo._id
+          : "",
+      );
+      setSubtasks(d.subtasks || []);
+    } catch {
+      setError("Unable to load task");
+    }
+  };
+  useEffect(() => {
+    if (projectId && taskId)
+      getTask(projectId, taskId)
+        .then((r) => {
+          const d = r.data ?? r;
+          setTask(d);
+          setTitle(d.title || "");
+          setDescription(d.description || "");
+          setStatus(d.status || "todo");
+          setAssignedTo(
+            typeof d.assignedTo === "object" && d.assignedTo
+              ? d.assignedTo._id
+              : "",
+          );
+          setSubtasks(d.subtasks || []);
+        })
+        .catch(() => setError("Unable to load task"));
+    if (projectId)
+      getProjectMembers(projectId)
+        .then((r) => setMembers(r.data ?? r))
+        .catch(() => setMembers([]));
+  }, [projectId, taskId]);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!projectId || !taskId) return;
+    try {
+      await updateTask(projectId, taskId, {
+        title,
+        description,
+        status,
+        ...(assignedTo ? { assignedTo } : {}),
+      });
+      await load();
+    } catch {
+      setError("Unable to update task");
+    }
+  };
+  const addSub = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!projectId || !taskId) return;
+    try {
+      await createSubTask(projectId, taskId, {
+        title: subTitle,
+        ...(subAssignedTo ? { assignedTo: subAssignedTo } : {}),
+      });
+      setSubTitle("");
+      setSubAssignedTo("");
+      await load();
+    } catch {
+      setError("Unable to create subtask");
+    }
+  };
+  const toggle = async (s: SubTask) => {
+    if (!projectId) return;
+    try {
+      await updateSubTask(projectId, s._id, { isCompleted: !s.isCompleted });
+      await load();
+    } catch {
+      setError("Unable to update subtask");
+    }
+  };
+  const removeSub = async (id: string) => {
+    if (!projectId || !window.confirm("Delete this subtask?")) return;
+    await deleteSubTask(projectId, id);
+    await load();
+  };
+  const removeTask = async () => {
+    if (!projectId || !taskId || !window.confirm("Delete this task?")) return;
+    await deleteTask(projectId, taskId);
+    navigate(`/projects/${projectId}/tasks`);
+  };
+  if (!task)
+    return (
+      <main className="grid min-h-screen place-items-center bg-[#f7f7fb]">
+        {error ? (
+          <div className="rounded-2xl bg-red-50 p-4 text-red-700">{error}</div>
+        ) : (
+          <p className="text-slate-500">Loading task...</p>
+        )}
+      </main>
+    );
+  const field =
+    "rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";
+  return (
+    <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-5xl">
+        <Link
+          className="font-bold text-violet-600"
+          to={`/projects/${projectId}/tasks`}
+        >
+          ← Tasks
+        </Link>
+        <div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${task.status === "done" ? "bg-emerald-100 text-emerald-700" : task.status === "in_progress" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}
+            >
+              {task.status.replace("_", " ")}
+            </span>
+            <h1 className="mt-3 font-display text-4xl font-bold">
+              {task.title}
+              <span className="text-fuchsia-500">.</span>
+            </h1>
+          </div>
+          {isProjectAdmin && (
+            <button
+              onClick={() => void removeTask()}
+              className="rounded-xl border border-red-200 bg-white px-4 py-2.5 font-bold text-red-600"
+            >
+              Delete task
+            </button>
+          )}
+        </div>
+        {error && (
+          <div className="mt-5 rounded-2xl bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+        <div className="mt-7 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <section className="rounded-[1.75rem] bg-white p-6 shadow-lg">
+            {isProjectAdmin ? (
+              <form onSubmit={save} className="grid gap-4">
+                <label className="grid gap-2 text-sm font-bold">
+                  Title
+                  <input
+                    className={field}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Description
+                  <textarea
+                    className={field}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={5}
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Assignee
+                  <select
+                    className={field}
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {members.map(
+                      (m) =>
+                        m.user && (
+                          <option key={m.user._id} value={m.user._id}>
+                            {m.user.fullName || m.user.username || m.user.email}
+                          </option>
+                        ),
+                    )}
+                  </select>
+                </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Status
+                  <select
+                    className={field}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                  >
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s.replace("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 py-3 font-bold text-white">
+                  Save changes
+                </button>
+              </form>
+            ) : (
+              <div>
+                <h2 className="font-display text-xl font-bold">Description</h2>
+                <p className="mt-3 whitespace-pre-wrap leading-7 text-slate-600">
+                  {task.description || "No description"}
+                </p>
+              </div>
+            )}
+          </section>
+          <section className="rounded-[1.75rem] bg-white p-6 shadow-lg">
+            <h2 className="font-display text-xl font-bold">Subtasks ✦</h2>
+            {isProjectAdmin && (
+              <form onSubmit={addSub} className="mt-4 grid gap-2">
+                <input
+                  className={field}
+                  placeholder="Subtask title"
+                  value={subTitle}
+                  onChange={(e) => setSubTitle(e.target.value)}
+                  required
+                />
+                <select
+                  className={field}
+                  value={subAssignedTo}
+                  onChange={(e) => setSubAssignedTo(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map(
+                    (m) =>
+                      m.user && (
+                        <option key={m.user._id} value={m.user._id}>
+                          {m.user.fullName || m.user.username || m.user.email}
+                        </option>
+                      ),
+                  )}
+                </select>
+                <button className="rounded-2xl bg-violet-100 py-3 font-bold text-violet-700">
+                  Add subtask +
+                </button>
+              </form>
+            )}
+            <div className="mt-5 grid gap-2">
+              {subtasks.length === 0 ? (
+                <p className="text-sm text-slate-400">No subtasks yet.</p>
+              ) : (
+                subtasks.map((s) => (
+                  <div
+                    key={s._id}
+                    className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3"
+                  >
+                    <input
+                      className="h-5 w-5 accent-violet-600"
+                      type="checkbox"
+                      checked={Boolean(s.isCompleted)}
+                      onChange={() => void toggle(s)}
+                    />
+                    <span
+                      className={`flex-1 font-medium ${s.isCompleted ? "text-slate-400 line-through" : ""}`}
+                    >
+                      {s.title}
+                    </span>
+                    {isProjectAdmin && (
+                      <button
+                        className="text-sm font-bold text-red-600"
+                        onClick={() => void removeSub(s._id)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}

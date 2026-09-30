@@ -1,2 +1,163 @@
-import { useEffect,useState } from "react";import type { FormEvent } from "react";import { Link } from "react-router-dom";import { createProject,getProjects } from "../../api/project.api";import type { Project } from "../../types/project";import { useAuthContext } from "../../context/AuthContext";
-export default function Projects(){const {user}=useAuthContext();const canCreate=user?.role==="admin";const [projects,setProjects]=useState<Project[]>([]);const [name,setName]=useState("");const [description,setDescription]=useState("");const [loading,setLoading]=useState(true);const [creating,setCreating]=useState(false);const [error,setError]=useState("");const load=async()=>{try{const r=await getProjects();setProjects(r.data??r);}catch(e){setError((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to load projects");}finally{setLoading(false);}};useEffect(()=>{void load();},[]);const submit=async(e:FormEvent)=>{e.preventDefault();setCreating(true);setError("");try{await createProject({name,description:description||undefined});setName("");setDescription("");await load();}catch(err){setError((err as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to create project");}finally{setCreating(false);}};const field="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";return <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10"><div className="mx-auto max-w-6xl"><div className="mb-8"><span className="font-bold uppercase tracking-[.18em] text-violet-600">Workspace</span><h1 className="mt-2 font-display text-4xl font-bold tracking-tight">Projects<span className="text-fuchsia-500">.</span></h1><p className="mt-2 text-slate-500">Projects you have access to.</p></div>{error&&<div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}{canCreate&&<form onSubmit={submit} className="mb-8 max-w-2xl rounded-[1.75rem] border border-white bg-white p-6 shadow-lg shadow-slate-200/50"><h2 className="font-display text-xl font-bold">Start something new ✨</h2><div className="mt-4 grid gap-3"><input className={field} placeholder="Project name" value={name} onChange={e=>setName(e.target.value)} required/><textarea className={field} placeholder="Description" value={description} onChange={e=>setDescription(e.target.value)} rows={3}/><button disabled={creating} className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 py-3 font-bold text-white shadow-lg shadow-violet-200 disabled:opacity-60">{creating?"Creating...":"Create project +"}</button></div></form>}{loading?<p className="text-slate-500">Loading projects...</p>:projects.length===0?<div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-12 text-center"><div className="text-4xl">🌈</div><h2 className="mt-3 font-display text-xl font-bold">No projects yet</h2></div>:<div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{projects.map(p=><Link className="group rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl" to={`/projects/${p._id}`} key={p._id}><div className="flex items-center justify-between"><span className="rounded-xl bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">PROJECT</span><span className="text-xl transition group-hover:rotate-12">✦</span></div><h2 className="mt-5 font-display text-xl font-bold">{p.name}</h2><p className="mt-2 line-clamp-3 text-sm text-slate-500">{p.description||"No description"}</p><span className="mt-6 inline-block font-bold text-violet-600 group-hover:text-fuchsia-600">View project →</span></Link>)}</div>}</div></main>}
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { createProject, getProjects } from "../../api/project.api";
+import type { Project } from "../../types/project";
+import { useAuthContext } from "../../context/AuthContext";
+export default function Projects() {
+  const { user } = useAuthContext();
+  const canCreate = user?.role === "admin";
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+  const load = async () => {
+    try {
+      const r = await getProjects();
+      setProjects(r.data ?? r);
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Unable to load projects",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    let active = true;
+
+    const loadInitialProjects = async () => {
+      try {
+        const r = await getProjects();
+        if (active) setProjects(r.data ?? r);
+      } catch (e) {
+        if (active) {
+          setError(
+            (e as { response?: { data?: { message?: string } } }).response?.data
+              ?.message || "Unable to load projects",
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadInitialProjects();
+    return () => {
+      active = false;
+    };
+  }, []);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    setError("");
+    try {
+      await createProject({ name, description: description || undefined });
+      setName("");
+      setDescription("");
+      await load();
+    } catch (err) {
+      setError(
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Unable to create project",
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+  const field =
+    "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100";
+  return (
+    <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8">
+          <span className="font-bold uppercase tracking-[.18em] text-violet-600">
+            Workspace
+          </span>
+          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight">
+            Projects<span className="text-fuchsia-500">.</span>
+          </h1>
+          <p className="mt-2 text-slate-500">Projects you have access to.</p>
+        </div>
+        {error && (
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        {canCreate && (
+          <form
+            onSubmit={submit}
+            className="mb-8 max-w-2xl rounded-[1.75rem] border border-white bg-white p-6 shadow-lg shadow-slate-200/50"
+          >
+            <h2 className="font-display text-xl font-bold">
+              Start something new ✨
+            </h2>
+            <div className="mt-4 grid gap-3">
+              <input
+                className={field}
+                placeholder="Project name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+              <textarea
+                className={field}
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+              <button
+                disabled={creating}
+                className="rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-500 px-5 py-3 font-bold text-white shadow-lg shadow-violet-200 disabled:opacity-60"
+              >
+                {creating ? "Creating..." : "Create project +"}
+              </button>
+            </div>
+          </form>
+        )}
+        {loading ? (
+          <p className="text-slate-500">Loading projects...</p>
+        ) : projects.length === 0 ? (
+          <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-12 text-center">
+            <div className="text-4xl">🌈</div>
+            <h2 className="mt-3 font-display text-xl font-bold">
+              No projects yet
+            </h2>
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p) => (
+              <Link
+                className="group rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl"
+                to={`/projects/${p._id}`}
+                key={p._id}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="rounded-xl bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">
+                    PROJECT
+                  </span>
+                  <span className="text-xl transition group-hover:rotate-12">
+                    ✦
+                  </span>
+                </div>
+                <h2 className="mt-5 font-display text-xl font-bold">
+                  {p.name}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-sm text-slate-500">
+                  {p.description || "No description"}
+                </p>
+                <span className="mt-6 inline-block font-bold text-violet-600 group-hover:text-fuchsia-600">
+                  View project →
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

@@ -1,2 +1,229 @@
-import { useCallback,useEffect,useState } from "react";import type { FormEvent } from "react";import { Link,useParams } from "react-router-dom";import { createTask,deleteTask,getTasks,type Task } from "../../api/task.api";import type { TaskStatus } from "../../types/task";import { useProjectRole } from "../../hooks/useProjectRole";import { getProjectMembers,type ProjectMember } from "../../api/member.api";
-const statuses:TaskStatus[]=["todo","in_progress","done"];export default function Tasks(){const {projectId}=useParams<{projectId:string}>();const {isProjectAdmin}=useProjectRole(projectId);const [tasks,setTasks]=useState<Task[]>([]);const [members,setMembers]=useState<ProjectMember[]>([]);const [title,setTitle]=useState("");const [description,setDescription]=useState("");const [status,setStatus]=useState<TaskStatus>("todo");const [assignedTo,setAssignedTo]=useState("");const [files,setFiles]=useState<File[]>([]);const [error,setError]=useState("");const [loading,setLoading]=useState(true);const [creating,setCreating]=useState(false);const load=useCallback(async()=>{if(!projectId)return;try{const r=await getTasks(projectId);setTasks(r.data??r);}catch(e){setError("Unable to load tasks");}finally{setLoading(false);}},[projectId]);useEffect(()=>{void load();if(projectId)getProjectMembers(projectId).then(r=>setMembers(r.data??r)).catch(()=>setMembers([]));},[load,projectId]);const submit=async(e:FormEvent)=>{e.preventDefault();if(!projectId)return;setCreating(true);try{const f=new FormData();f.append("title",title);if(description)f.append("description",description);f.append("status",status);if(assignedTo)f.append("assignedTo",assignedTo);files.forEach(x=>f.append("attachments",x));await createTask(projectId,f);setTitle("");setDescription("");setAssignedTo("");setFiles([]);await load();}catch(e){setError((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Unable to create task");}finally{setCreating(false);}};const remove=async(id:string)=>{if(!projectId||!window.confirm("Delete this task?"))return;await deleteTask(projectId,id);await load();};return <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10"><div className="mx-auto max-w-6xl"><Link className="font-bold text-violet-600" to={`/projects/${projectId}`}>← Project</Link><div className="mt-6"><span className="font-bold uppercase tracking-[.18em] text-violet-600">Execution</span><h1 className="mt-2 font-display text-4xl font-bold">Tasks<span className="text-fuchsia-500">.</span></h1><p className="mt-2 text-slate-500">Turn ideas into progress.</p></div>{error&&<div className="mt-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</div>}{isProjectAdmin&&<form onSubmit={submit} className="mt-7 rounded-[1.75rem] bg-white p-6 shadow-lg"><h2 className="font-display text-xl font-bold">Create a task 🚀</h2><div className="mt-4 grid gap-3"><input className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" placeholder="Task title" value={title} onChange={e=>setTitle(e.target.value)} required/><textarea className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" placeholder="Description" value={description} onChange={e=>setDescription(e.target.value)} rows={3}/><div className="grid gap-3 md:grid-cols-3"><select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={assignedTo} onChange={e=>setAssignedTo(e.target.value)}><option value="">Unassigned</option>{members.map(m=>m.user&&<option key={m.user._id} value={m.user._id}>{m.user.fullName||m.user.username||m.user.email}</option>)}</select><select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>{statuses.map(s=><option key={s} value={s}>{s.replace("_"," ")}</option>)}</select><input className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" type="file" multiple onChange={e=>setFiles(Array.from(e.target.files||[]))}/></div><button disabled={creating} className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 py-3 font-bold text-white disabled:opacity-60">{creating?"Creating...":"Create task +"}</button></div></form>}{loading?<p className="mt-7 text-slate-500">Loading tasks...</p>:<div className="mt-7 grid gap-4">{tasks.map(t=><article key={t._id} className="flex flex-col justify-between gap-5 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center"><div><span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${t.status==="done"?"bg-emerald-100 text-emerald-700":t.status==="in_progress"?"bg-amber-100 text-amber-700":"bg-slate-100 text-slate-600"}`}>{t.status.replace("_"," ")}</span><h2 className="mt-3 font-display text-xl font-bold">{t.title}</h2><p className="mt-1 text-sm text-slate-500">{t.description||"No description"}</p></div><div className="flex gap-2"><Link className="rounded-xl bg-violet-100 px-4 py-2.5 font-bold text-violet-700" to={`/projects/${projectId}/tasks/${t._id}`}>Open</Link>{isProjectAdmin&&<button className="rounded-xl border border-red-200 px-4 py-2.5 font-bold text-red-600" onClick={()=>void remove(t._id)}>Delete</button>}</div></article>)}</div>}</div></main>}
+import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  type Task,
+} from "../../api/task.api";
+import type { TaskStatus } from "../../types/task";
+import { useProjectRole } from "../../hooks/useProjectRole";
+import { getProjectMembers, type ProjectMember } from "../../api/member.api";
+const statuses: TaskStatus[] = ["todo", "in_progress", "done"];
+export default function Tasks() {
+  const { projectId } = useParams<{ projectId: string }>();
+  const { isProjectAdmin } = useProjectRole(projectId);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<TaskStatus>("todo");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const load = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const r = await getTasks(projectId);
+      setTasks(r.data ?? r);
+    } catch {
+      setError("Unable to load tasks");
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+  useEffect(() => {
+    let active = true;
+    const fetchTasks = async () => {
+      if (!projectId) return;
+      try {
+        const r = await getTasks(projectId);
+        if (active) setTasks(r.data ?? r);
+      } catch {
+        if (active) setError("Unable to load tasks");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    const fetchMembers = async () => {
+      if (!projectId) return;
+      try {
+        const r = await getProjectMembers(projectId);
+        if (active) setMembers(r.data ?? r);
+      } catch {
+        if (active) setMembers([]);
+      }
+    };
+    void fetchTasks();
+    void fetchMembers();
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!projectId) return;
+    setCreating(true);
+    try {
+      const f = new FormData();
+      f.append("title", title);
+      if (description) f.append("description", description);
+      f.append("status", status);
+      if (assignedTo) f.append("assignedTo", assignedTo);
+      files.forEach((x) => f.append("attachments", x));
+      await createTask(projectId, f);
+      setTitle("");
+      setDescription("");
+      setAssignedTo("");
+      setFiles([]);
+      await load();
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Unable to create task",
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+  const remove = async (id: string) => {
+    if (!projectId || !window.confirm("Delete this task?")) return;
+    await deleteTask(projectId, id);
+    await load();
+  };
+  return (
+    <main className="min-h-screen bg-[#f7f7fb] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl">
+        <Link
+          className="font-bold text-violet-600"
+          to={`/projects/${projectId}`}
+        >
+          ← Project
+        </Link>
+        <div className="mt-6">
+          <span className="font-bold uppercase tracking-[.18em] text-violet-600">
+            Execution
+          </span>
+          <h1 className="mt-2 font-display text-4xl font-bold">
+            Tasks<span className="text-fuchsia-500">.</span>
+          </h1>
+          <p className="mt-2 text-slate-500">Turn ideas into progress.</p>
+        </div>
+        {error && (
+          <div className="mt-5 rounded-2xl bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+        {isProjectAdmin && (
+          <form
+            onSubmit={submit}
+            className="mt-7 rounded-[1.75rem] bg-white p-6 shadow-lg"
+          >
+            <h2 className="font-display text-xl font-bold">Create a task 🚀</h2>
+            <div className="mt-4 grid gap-3">
+              <input
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                placeholder="Task title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+              <textarea
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+              <div className="grid gap-3 md:grid-cols-3">
+                <select
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map(
+                    (m) =>
+                      m.user && (
+                        <option key={m.user._id} value={m.user._id}>
+                          {m.user.fullName || m.user.username || m.user.email}
+                        </option>
+                      ),
+                  )}
+                </select>
+                <select
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                >
+                  {statuses.map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  type="file"
+                  multiple
+                  onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                />
+              </div>
+              <button
+                disabled={creating}
+                className="rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-500 px-5 py-3 font-bold text-white disabled:opacity-60"
+              >
+                {creating ? "Creating..." : "Create task +"}
+              </button>
+            </div>
+          </form>
+        )}
+        {loading ? (
+          <p className="mt-7 text-slate-500">Loading tasks...</p>
+        ) : (
+          <div className="mt-7 grid gap-4">
+            {tasks.map((t) => (
+              <article
+                key={t._id}
+                className="flex flex-col justify-between gap-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center"
+              >
+                <div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${t.status === "done" ? "bg-emerald-100 text-emerald-700" : t.status === "in_progress" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}
+                  >
+                    {t.status.replace("_", " ")}
+                  </span>
+                  <h2 className="mt-3 font-display text-xl font-bold">
+                    {t.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {t.description || "No description"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Link
+                    className="rounded-xl bg-violet-100 px-4 py-2.5 font-bold text-violet-700"
+                    to={`/projects/${projectId}/tasks/${t._id}`}
+                  >
+                    Open
+                  </Link>
+                  {isProjectAdmin && (
+                    <button
+                      className="rounded-xl border border-red-200 px-4 py-2.5 font-bold text-red-600"
+                      onClick={() => void remove(t._id)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
