@@ -1,11 +1,2 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuthContext } from "../context/AuthContext";
-
-export default function ProtectedRoute() {
-  const { user, loading } = useAuthContext();
-  const location = useLocation();
-
-  if (loading) return <main className="page"><p>Loading...</p></main>;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  return <Outlet />;
-}
+import { Navigate,Outlet,useLocation } from "react-router-dom";import { useAuthContext } from "../context/AuthContext";
+export default function ProtectedRoute(){const {user,loading}=useAuthContext();const location=useLocation();if(loading)return <main className="grid min-h-screen place-items-center bg-[#f7f7fb]"><div className="text-center"><div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600"/><p className="mt-4 font-medium text-slate-500">Loading workspace...</p></div></main>;if(!user)return <Navigate to="/login" replace state={{from:location.pathname}}/>;return <Outlet/>;}
