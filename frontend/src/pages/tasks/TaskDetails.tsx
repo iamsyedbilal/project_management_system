@@ -223,7 +223,7 @@ export default function TaskDetails() {
                     ))}
                   </select>
                 </label>
-                <button className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 py-3 font-bold text-white">
+                <button className="rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-500 py-3 font-bold text-white">
                   Save changes
                 </button>
               </form>
