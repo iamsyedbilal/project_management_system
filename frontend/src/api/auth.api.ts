@@ -3,7 +3,6 @@ import { api } from "./axios";
 export interface RegisterPayload {
   username: string;
   email: string;
-  fullName: string;
   password: string;
 }
 export interface LoginPayload {
@@ -15,6 +14,7 @@ export const registerUser = async (data: RegisterPayload) =>
   (await api.post("/auth/register", data)).data;
 export const loginUser = async (data: LoginPayload) =>
   (await api.post("/auth/login", data)).data;
+
 export const logoutUser = async () => (await api.post("/auth/logout")).data;
 export const getCurrentUser = async () =>
   (await api.get("/auth/current-user")).data;

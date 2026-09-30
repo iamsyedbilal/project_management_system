@@ -2,16 +2,17 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../api/auth.api";
+
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
     email: "",
-    fullName: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -50,15 +51,7 @@ export default function Register() {
           </div>
         )}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">
-            Full name
-            <input
-              className={field}
-              value={form.fullName}
-              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-              required
-            />
-          </label>
+         
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
             Username
             <input
