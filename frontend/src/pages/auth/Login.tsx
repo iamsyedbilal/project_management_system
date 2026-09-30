@@ -7,31 +7,7 @@ import { useAuthContext } from "../../context/AuthContext";
 import type { User } from "../../types/auth";
 
 export default function Login() {
-  const navigate = useNavigate();
-  const { setUser } = useAuthContext();
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault(); setError(""); setLoading(true);
-    try {
-      const response = await loginUser({ identifier, password });
-      const user = (response.data?.user ?? response.user) as User;
-      setUser(user);
-      navigate("/dashboard", { replace: true });
-    } catch (err: unknown) {
-      setError(isAxiosError<{message?:string}>(err) ? err.response?.data?.message || "Login failed" : "Login failed");
-    } finally { setLoading(false); }
-  };
-  return <main className="auth-page"><form className="auth-card" onSubmit={submit}>
-    <h1>Sign in</h1><p>Project Management System</p>
-    {error && <div className="error">{error}</div>}
-    <label>Email or username<input type="text" value={identifier} onChange={e=>setIdentifier(e.target.value)} autoComplete="username" required /></label>
-    <label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required /></label>
-    <button disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
-    <Link to="/forgot-password">Forgot password?</Link>
-    <span>Don't have an account? <Link to="/register">Register</Link></span>
-  </form></main>;
+ const navigate=useNavigate();const {setUser}=useAuthContext();const [identifier,setIdentifier]=useState("");const [password,setPassword]=useState("");const [error,setError]=useState("");const [loading,setLoading]=useState(false);
+ const submit=async(e:FormEvent)=>{e.preventDefault();setError("");setLoading(true);try{const r=await loginUser({identifier,password});setUser((r.data?.user??r.user) as User);navigate("/dashboard",{replace:true});}catch(err:unknown){setError(isAxiosError<{message?:string}>(err)?err.response?.data?.message||"Login failed":"Login failed");}finally{setLoading(false);}};
+ return <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f7f7fb] px-4 py-8"><div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-300/35 blur-3xl"/><div className="absolute -bottom-28 -right-20 h-80 w-80 rounded-full bg-violet-300/35 blur-3xl"/><form onSubmit={submit} className="relative w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-7 shadow-[0_25px_80px_rgba(76,29,149,.15)] backdrop-blur-xl sm:p-9"><div className="mb-8"><span className="inline-flex rounded-2xl bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-[.18em] text-violet-700">FlowBoard</span><h1 className="mt-4 font-display text-4xl font-bold tracking-tight">Welcome back<span className="text-fuchsia-500">.</span></h1><p className="mt-2 text-slate-500">Sign in to manage your projects.</p></div>{error&&<div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}<div className="space-y-4"><label className="grid gap-2 text-sm font-semibold text-slate-700">Email or username<input className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100" value={identifier} onChange={e=>setIdentifier(e.target.value)} autoComplete="username" required/></label><label className="grid gap-2 text-sm font-semibold text-slate-700">Password<input className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/></label></div><button disabled={loading} className="mt-6 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60">{loading?"Signing in...":"Sign in →"}</button><div className="mt-5 flex justify-between text-sm"><Link className="font-semibold text-violet-600 hover:text-fuchsia-600" to="/forgot-password">Forgot password?</Link><span className="text-slate-500">New here? <Link className="font-bold text-violet-600" to="/register">Create account</Link></span></div></form></main>;
 }
