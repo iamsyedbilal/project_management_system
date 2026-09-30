@@ -13,7 +13,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status !== 401 || !original || original._retry || original.url?.includes("/auth/refresh-token")) {
+    const requestUrl = original?.url ?? "";
+    const isAuthRequest = requestUrl.includes("/auth/");
+
+    // Authentication endpoints can legitimately return 401 before a user is
+    // logged in. Never try to refresh a session for those requests.
+    if (
+      error.response?.status !== 401 ||
+      !original ||
+      original._retry ||
+      isAuthRequest
+    ) {
       return Promise.reject(error);
     }
     if (refreshing) {
