@@ -64,29 +64,30 @@ The frontend uses a playful purple/fuchsia Tailwind UI, while the backend provid
 
 \`\`\`text
 project_management_system/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── middlewares/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   └── utils/
-│   ├── PRD.md
-│   └── package.json
 │
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── hooks/
-│   │   ├── pages/
-│   │   ├── routes/
-│   │   └── types/
-│   └── package.json
+├── 📁 backend/                         # REST API & business logic
+│   ├── 📁 src/
+│   │   ├── 📁 controllers/             # Request handlers
+│   │   ├── 📁 middlewares/             # Auth, RBAC & uploads
+│   │   ├── 📁 models/                  # Mongoose schemas
+│   │   ├── 📁 routes/                  # API route definitions
+│   │   ├── 📁 services/                # Business logic
+│   │   └── 📁 utils/                   # Helpers & shared utilities
+│   ├── 📄 PRD.md                       # Product requirements
+│   └── 📄 package.json
 │
-└── README.md
+├── 📁 frontend/                        # React web application
+│   ├── 📁 src/
+│   │   ├── 📁 api/                     # Backend API clients
+│   │   ├── 📁 components/              # Reusable UI components
+│   │   ├── 📁 context/                # Global application state
+│   │   ├── 📁 hooks/                   # Custom React hooks
+│   │   ├── 📁 pages/                   # Application screens
+│   │   ├── 📁 routes/                  # Route configuration
+│   │   └── 📁 types/                   # TypeScript types
+│   └── 📄 package.json
+│
+└── 📄 README.md                        # Project documentation
 \`\`\`
 
 ## 🚦 Getting Started
