@@ -1,20 +1,231 @@
-import { FormEvent, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { createSubTask, deleteSubTask, deleteTask, getTask, updateSubTask, updateTask, type SubTask, type Task } from '../../api/task.api'
-import type { TaskStatus } from '../../types/task'
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  createSubTask,
+  deleteSubTask,
+  deleteTask,
+  getTask,
+  updateSubTask,
+  updateTask,
+  type SubTask,
+  type Task,
+} from "../../api/task.api";
+import type { TaskStatus } from "../../types/task";
 
-const statuses: TaskStatus[] = ['todo','in_progress','done']
+const statuses: TaskStatus[] = ["todo", "in_progress", "done"];
 
-export default function TaskDetails(){
-  const {projectId,taskId}=useParams<{projectId:string;taskId:string}>()
-  const [task,setTask]=useState<Task|null>(null); const [subtasks,setSubtasks]=useState<SubTask[]>([]); const [title,setTitle]=useState(''); const [description,setDescription]=useState(''); const [status,setStatus]=useState<TaskStatus>('todo'); const [subTitle,setSubTitle]=useState(''); const [error,setError]=useState('')
-  const load=async()=>{if(!projectId||!taskId)return;try{const r=await getTask(projectId,taskId);const data=r.data??r;setTask(data);setTitle(data.title||'');setDescription(data.description||'');setStatus(data.status||'todo');setSubtasks(data.subtasks||[])}catch(err:any){setError(err.response?.data?.message||'Unable to load task')}}
-  useEffect(()=>{void load()},[projectId,taskId])
-  const save=async(e:FormEvent)=>{e.preventDefault();if(!projectId||!taskId)return;try{await updateTask(projectId,taskId,{title,description,status});await load()}catch(err:any){setError(err.response?.data?.message||'Unable to update task')}}
-  const addSub=async(e:FormEvent)=>{e.preventDefault();if(!projectId||!taskId||!subTitle)return;try{await createSubTask(projectId,taskId,{title:subTitle});setSubTitle('');await load()}catch(err:any){setError(err.response?.data?.message||'Unable to create subtask')}}
-  const toggleSub=async(sub:SubTask)=>{if(!projectId)return;try{const completed=!(sub.completed||sub.status==='done');await updateSubTask(projectId,sub._id,{completed,status:completed?'done':'todo'});await load()}catch(err:any){setError(err.response?.data?.message||'Unable to update subtask')}}
-  const removeSub=async(id:string)=>{if(!projectId||!window.confirm('Delete this subtask?'))return;try{await deleteSubTask(projectId,id);await load()}catch(err:any){setError(err.response?.data?.message||'Unable to delete subtask')}}
-  const removeTask=async()=>{if(!projectId||!taskId||!window.confirm('Delete this task?'))return;try{await deleteTask(projectId,taskId);window.location.href=`/projects/${projectId}/tasks`}catch(err:any){setError(err.response?.data?.message||'Unable to delete task')}}
-  if(!task)return <main className="page"><Link to={`/projects/${projectId}/tasks`}>← Tasks</Link>{error?<div className="error">{error}</div>:<p>Loading task...</p>}</main>
-  return <main className="page"><Link to={`/projects/${projectId}/tasks`}>← Tasks</Link>{error&&<div className="error">{error}</div>}<div className="task-detail"><div className="task-detail-header"><div><span className={`status-badge status-${task.status}`}>{task.status.replace('_',' ')}</span><h1>{task.title}</h1></div><button className="danger-button" onClick={() => void removeTask()}>Delete task</button></div><form className="task-form" onSubmit={save}><label>Title<input value={title} onChange={e=>setTitle(e.target.value)} required/></label><label>Description<textarea value={description} onChange={e=>setDescription(e.target.value)} rows={5}/></label><label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>{statuses.map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}</select></label><button>Save changes</button></form><section className="subtask-section"><h2>Subtasks</h2><form className="subtask-form" onSubmit={addSub}><input placeholder="Subtask title" value={subTitle} onChange={e=>setSubTitle(e.target.value)} required/><button>Add subtask</button></form>{subtasks.length===0?<p>No subtasks.</p>:<div className="subtask-list">{subtasks.map(sub=><div className="subtask-card" key={sub._id}><label><input type="checkbox" checked={sub.completed||sub.status==='done'} onChange={()=>void toggleSub(sub)}/><span className={sub.completed||sub.status==='done'?'completed':''}>{sub.title}</span></label><button className="danger-button" onClick={()=>void removeSub(sub._id)}>Delete</button></div>)}</div>}</section></div></main>
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (err: unknown, fallback: string) =>
+  (err as ApiError).response?.data?.message || fallback;
+
+export default function TaskDetails() {
+  const { projectId, taskId } = useParams<{
+    projectId: string;
+    taskId: string;
+  }>();
+  const [task, setTask] = useState<Task | null>(null);
+  const [subtasks, setSubtasks] = useState<SubTask[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<TaskStatus>("todo");
+  const [subTitle, setSubTitle] = useState("");
+  const [error, setError] = useState("");
+  const load = async () => {
+    if (!projectId || !taskId) return;
+    try {
+      const r = await getTask(projectId, taskId);
+      const data = r.data ?? r;
+      setTask(data);
+      setTitle(data.title || "");
+      setDescription(data.description || "");
+      setStatus(data.status || "todo");
+      setSubtasks(data.subtasks || []);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to load task"));
+    }
+  };
+  useEffect(() => {
+    let cancelled = false;
+    const fetchTask = async () => {
+      if (!projectId || !taskId) return;
+      try {
+        const r = await getTask(projectId, taskId);
+        if (cancelled) return;
+        const data = r.data ?? r;
+        setTask(data);
+        setTitle(data.title || "");
+        setDescription(data.description || "");
+        setStatus(data.status || "todo");
+        setSubtasks(data.subtasks || []);
+      } catch (err: unknown) {
+        if (!cancelled) setError(getErrorMessage(err, "Unable to load task"));
+      }
+    };
+    void fetchTask();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, taskId]);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!projectId || !taskId) return;
+    try {
+      await updateTask(projectId, taskId, { title, description, status });
+      await load();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to update task"));
+    }
+  };
+  const addSub = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!projectId || !taskId || !subTitle) return;
+    try {
+      await createSubTask(projectId, taskId, { title: subTitle });
+      setSubTitle("");
+      await load();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to create subtask"));
+    }
+  };
+  const toggleSub = async (sub: SubTask) => {
+    if (!projectId) return;
+    try {
+      const completed = !(sub.completed || sub.status === "done");
+      await updateSubTask(projectId, sub._id, {
+        completed,
+        status: completed ? "done" : "todo",
+      });
+      await load();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to update subtask"));
+    }
+  };
+  const removeSub = async (id: string) => {
+    if (!projectId || !window.confirm("Delete this subtask?")) return;
+    try {
+      await deleteSubTask(projectId, id);
+      await load();
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to delete subtask"));
+    }
+  };
+  const removeTask = async () => {
+    if (!projectId || !taskId || !window.confirm("Delete this task?")) return;
+    try {
+      await deleteTask(projectId, taskId);
+      window.location.href = `/projects/${projectId}/tasks`;
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Unable to delete task"));
+    }
+  };
+  if (!task)
+    return (
+      <main className="page">
+        <Link to={`/projects/${projectId}/tasks`}>← Tasks</Link>
+        {error ? <div className="error">{error}</div> : <p>Loading task...</p>}
+      </main>
+    );
+  return (
+    <main className="page">
+      <Link to={`/projects/${projectId}/tasks`}>← Tasks</Link>
+      {error && <div className="error">{error}</div>}
+      <div className="task-detail">
+        <div className="task-detail-header">
+          <div>
+            <span className={`status-badge status-${task.status}`}>
+              {task.status.replace("_", " ")}
+            </span>
+            <h1>{task.title}</h1>
+          </div>
+          <button className="danger-button" onClick={() => void removeTask()}>
+            Delete task
+          </button>
+        </div>
+        <form className="task-form" onSubmit={save}>
+          <label>
+            Title
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Description
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+            />
+          </label>
+          <label>
+            Status
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TaskStatus)}
+            >
+              {statuses.map((s) => (
+                <option key={s} value={s}>
+                  {s.replace("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button>Save changes</button>
+        </form>
+        <section className="subtask-section">
+          <h2>Subtasks</h2>
+          <form className="subtask-form" onSubmit={addSub}>
+            <input
+              placeholder="Subtask title"
+              value={subTitle}
+              onChange={(e) => setSubTitle(e.target.value)}
+              required
+            />
+            <button>Add subtask</button>
+          </form>
+          {subtasks.length === 0 ? (
+            <p>No subtasks.</p>
+          ) : (
+            <div className="subtask-list">
+              {subtasks.map((sub) => (
+                <div className="subtask-card" key={sub._id}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={sub.completed || sub.status === "done"}
+                      onChange={() => void toggleSub(sub)}
+                    />
+                    <span
+                      className={
+                        sub.completed || sub.status === "done"
+                          ? "completed"
+                          : ""
+                      }
+                    >
+                      {sub.title}
+                    </span>
+                  </label>
+                  <button
+                    className="danger-button"
+                    onClick={() => void removeSub(sub._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
 }
